@@ -42,3 +42,30 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 end
+
+# CORS — allow React frontend to call this API
+gem "rack-cors"
+
+# HTTP client for external API calls
+gem "faraday", "~> 2.9"
+gem "faraday-retry"
+
+# JSON serialization
+gem "jsonapi-serializer"
+
+# Environment variables in development
+gem "dotenv-rails", groups: [:development, :test]
+
+# Rate limiting
+gem "rack-attack"
+
+# Thread-safe arrays for parallel API calls
+gem "concurrent-ruby"
+
+group :development, :test do
+  gem "rspec-rails", "~> 6.1"
+  gem "factory_bot_rails"
+  gem "webmock"
+  gem "vcr"
+  gem "pry-rails"
+end
