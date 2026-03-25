@@ -1,3 +1,4 @@
+# app/models/cached_search.rb
 class CachedSearch < ApplicationRecord
   validates :location, presence: true
   validates :query, presence: true
