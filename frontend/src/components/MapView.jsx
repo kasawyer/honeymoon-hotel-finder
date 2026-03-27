@@ -70,33 +70,30 @@ export default function MapView({ hotels }) {
                     />
                 ))}
 
-                {selected && (
+                {selectedHotel && (
                     <InfoWindowF
-                        position={{ lat: selected.latitude, lng: selected.longitude }}
-                        onCloseClick={() => setSelected(null)}
+                        position={{ lat: selectedHotel.latitude, lng: selectedHotel.longitude }}
+                        onCloseClick={() => setSelectedHotel(null)}
                     >
                         <div className="max-w-[220px] p-1">
-                            <h3 className="font-bold text-sm mb-1">{selected.name}</h3>
-                            {selected.rating && (
+                            <h3 className="font-bold text-sm mb-1">{selectedHotel.name}</h3>
+                            {selectedHotel.combined_rating && (
                                 <div className="flex items-center gap-1 mb-1">
                                     <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                    <span className="text-xs font-medium">{Number(selected.rating).toFixed(1)}</span>
+                                    <span className="text-xs font-medium">
+                    {Number(selectedHotel.combined_rating).toFixed(1)}
+                  </span>
+                                    {selectedHotel.sources?.length > 1 && (
+                                        <span className="text-xs text-gray-400">
+                      ({selectedHotel.sources.length} sources)
+                    </span>
+                                    )}
                                 </div>
                             )}
-                            {selected.price_per_night && (
+                            {selectedHotel.price_per_night && (
                                 <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>
-                                    ${Number(selected.price_per_night).toFixed(0)}/night
+                                    ${Number(selectedHotel.price_per_night).toFixed(0)}/night
                                 </p>
-                            )}
-                            {selected.url && (
-                                <a
-                                    href={selected.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 hover:underline mt-1 inline-flex items-center gap-1"
-                                >
-                                    View details <ExternalLink className="w-2.5 h-2.5" />
-                                </a>
                             )}
                         </div>
                     </InfoWindowF>

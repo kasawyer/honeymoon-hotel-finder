@@ -9,11 +9,22 @@ const SOURCE_CONFIG = {
 };
 
 export default function HotelCard({ hotel }) {
-    const source = SOURCE_CONFIG[hotel.source] || { label: hotel.source, color: "#666" };
+    const handleCardClick = () => {
+        if (hotel.url) {
+            window.open(hotel.url, "_blank", "noopener,noreferrer");
+        }
+    };
+
+    const sources = hotel.sources || [hotel.source];
+    const sourceRatings = hotel.source_ratings || [];
 
     return (
-        <div className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl
-                    transition-all duration-300 border border-gray-50 group">
+        <div
+            onClick={handleCardClick}
+            className={`bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl
+                  transition-all duration-300 border border-gray-50 group
+                  ${hotel.url ? "cursor-pointer" : ""}`}
+        >
             {/* Image */}
             <div className="relative h-48 bg-gradient-to-br from-rose-50 to-amber-50 overflow-hidden">
                 {hotel.image_url ? (
@@ -30,13 +41,21 @@ export default function HotelCard({ hotel }) {
                     </div>
                 )}
 
-                {/* Source badge */}
-                <span
-                    className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm"
-                    style={{ backgroundColor: source.color }}
-                >
-          {source.label}
-        </span>
+                {/* Source badges — show all sources that found this hotel */}
+                <div className="absolute top-3 right-3 flex gap-1">
+                    {sources.map((src) => {
+                        const config = SOURCE_CONFIG[src] || { label: src, color: "#666" };
+                        return (
+                            <span
+                                key={src}
+                                className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm"
+                                style={{ backgroundColor: config.color }}
+                            >
+                {config.label}
+              </span>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Content */}
@@ -52,20 +71,21 @@ export default function HotelCard({ hotel }) {
                     </p>
                 )}
 
-                <div className="flex items-center justify-between">
-                    {/* Rating */}
-                    <div className="flex items-center gap-1">
-                        {hotel.rating ? (
+                {/* Combined rating */}
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-1.5">
+                        {hotel.combined_rating ? (
                             <>
-                                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                                <span className="font-semibold text-gray-700">
-                  {Number(hotel.rating).toFixed(1)}
+                                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                                <span className="font-bold text-lg text-gray-800">
+                  {Number(hotel.combined_rating).toFixed(1)}
                 </span>
-                                {hotel.total_ratings && (
-                                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    ({Number(hotel.total_ratings).toLocaleString()})
-                  </span>
-                                )}
+                                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  {hotel.total_reviews
+                      ? `(${Number(hotel.total_reviews).toLocaleString()} reviews)`
+                      : ""}
+                                    {sources.length > 1 ? ` · ${sources.length} sources` : ""}
+                </span>
                             </>
                         ) : (
                             <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>No rating</span>
@@ -85,18 +105,37 @@ export default function HotelCard({ hotel }) {
                     ) : null}
                 </div>
 
+                {/* Per-source rating breakdown */}
+                {sourceRatings.length > 1 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        {sourceRatings.map((sr) => {
+                            const config = SOURCE_CONFIG[sr.source] || { label: sr.source, color: "#666" };
+                            return (
+                                <div
+                                    key={sr.source}
+                                    className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-50"
+                                >
+                  <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: config.color }}
+                  />
+                                    <span className="text-gray-500">{config.label}</span>
+                                    <span className="font-semibold text-gray-700">{Number(sr.rating).toFixed(1)}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
                 {/* External link */}
                 {hotel.url && (
-                    <a
-                        href={hotel.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 inline-flex items-center gap-1 text-sm font-medium
+                    <p
+                        className="inline-flex items-center gap-1 text-sm font-medium
                        hover:underline transition-colors"
                         style={{ color: "var(--color-primary)" }}
                     >
-                        View on {source.label} <ExternalLink className="w-3 h-3" />
-                    </a>
+                        View details <ExternalLink className="w-3 h-3" />
+                    </p>
                 )}
             </div>
         </div>
