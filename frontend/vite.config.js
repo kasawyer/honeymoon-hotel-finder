@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
-    // Proxy API requests to Rails in development
     proxy: {
       "/api": {
         target: "http://localhost:3001",
@@ -18,5 +17,11 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: false,
+  },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.js",
+    css: false,
   },
 });
