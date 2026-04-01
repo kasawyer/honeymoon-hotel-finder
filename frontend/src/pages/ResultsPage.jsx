@@ -8,6 +8,7 @@ import HotelList from "../components/HotelList";
 import MapView from "../components/MapView";
 import PriceFilter from "../components/PriceFilter";
 import { searchHotels } from "../api/client";
+import RatingFilter from "../components/RatingFilter";
 
 export default function ResultsPage() {
     const [searchParams] = useSearchParams();
@@ -22,6 +23,7 @@ export default function ResultsPage() {
     const [keywords, setKeywords] = useState(keywordsParam.split(","));
     const [viewMode, setViewMode] = useState("grid");
     const [priceFilter, setPriceFilter] = useState({ min: 0, max: Infinity, includeNoPrices: true });
+    const [minRating, setMinRating] = useState(0);
 
     // Fetch hotels when URL params change
     const fetchHotels = useCallback(async () => {
@@ -51,15 +53,25 @@ export default function ResultsPage() {
         fetchHotels();
     }, [fetchHotels]);
 
-    // Filter hotels by price
+    // Filter hotels by price and rating
     const filteredHotels = useMemo(() => {
         return hotels.filter((hotel) => {
+            // Price filter
             if (hotel.price_per_night == null) {
-                return priceFilter.includeNoPrices;
+                if (!priceFilter.includeNoPrices) return false;
+            } else if (hotel.price_per_night < priceFilter.min || hotel.price_per_night > priceFilter.max) {
+                return false;
             }
-            return hotel.price_per_night >= priceFilter.min && hotel.price_per_night <= priceFilter.max;
+
+            // Rating filter
+            if (minRating > 0) {
+                if (hotel.combined_rating == null) return false;
+                if (hotel.combined_rating < minRating) return false;
+            }
+
+            return true;
         });
-    }, [hotels, priceFilter]);
+    }, [hotels, priceFilter, minRating]);
 
     const handleNewSearch = (newLocation) => {
         const params = new URLSearchParams({
@@ -110,8 +122,9 @@ export default function ResultsPage() {
                 {/* Sidebar filters */}
                 {!loading && hotels.length > 0 && (
                     <div className="lg:w-72 shrink-0">
-                        <div className="sticky top-24">
+                        <div className="sticky top-24 space-y-4">
                             <PriceFilter hotels={hotels} onFilterChange={handlePriceFilterChange} />
+                            <RatingFilter value={minRating} onChange={setMinRating} hotels={hotels} />
                         </div>
                     </div>
                 )}
