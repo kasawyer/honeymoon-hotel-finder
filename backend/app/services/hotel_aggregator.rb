@@ -118,49 +118,59 @@ class HotelAggregator
     nil
   end
 
-  # ── Booking.com lookup (two-step: location → data) ──────────────────
+  # ── Booking.com lookup (two-step: searchDestination → getHotelReviewScores) ──
 
   def lookup_booking(hotel_name)
     conn = booking_connection
 
     # Step 1: Find the hotel's dest_id
-    loc_response = conn.get("/v1/hotels/locations", {
-      name: "#{hotel_name}",
-      locale: "en-us"
+    loc_response = conn.get("/api/v1/hotels/searchDestination", {
+      query: hotel_name
     })
     return nil unless loc_response.success?
 
-    locations = loc_response.body
+    locations = loc_response.body.dig("data") || []
     locations = [locations] if locations.is_a?(Hash)
 
     # Find the best match — prefer type "ho" (hotel) and matching city
+    city_filter = @location.split(",").first.strip.downcase
     hotel_match = locations.find do |loc|
-      loc["dest_type"] == "hotel" &&
-        loc["city_name"]&.downcase&.include?(@location.split(",").first.strip.downcase)
+      loc["search_type"] == "hotel" &&
+        loc["city_name"]&.downcase&.include?(city_filter)
     end
-    hotel_match ||= locations.find { |loc| loc["dest_type"] == "hotel" }
+    hotel_match ||= locations.find { |loc| loc["search_type"] == "hotel" }
     return nil unless hotel_match
 
     hotel_id = hotel_match["dest_id"]
+    booking_url = "https://www.booking.com/hotel/#{hotel_match['cc1']}/#{hotel_id}.html"
 
-    # Step 2: Get hotel details including review score
-    data_response = conn.get("/v1/hotels/data", {
-      hotel_id: hotel_id,
-      locale: "en-us"
+    # Step 2: Get review scores
+    scores_response = conn.get("/api/v1/hotels/getHotelReviewScores", {
+      hotel_id: hotel_id
     })
-    return nil unless data_response.success?
+    return nil unless scores_response.success?
 
-    data = data_response.body
-    return nil unless data.is_a?(Hash) && data["review_score"].present?
+    score_data = scores_response.body.dig("data") || []
+    score_data = [score_data] if score_data.is_a?(Hash)
+
+    # Find the "total" customer_type entry for overall score
+    breakdown = score_data.first&.dig("score_breakdown") || []
+    total_entry = breakdown.find { |b| b["customer_type"] == "total" }
+    return nil unless total_entry
+
+    review_score = total_entry["average_score"].to_f
+    review_count = total_entry["count"].to_i
+
+    # Also try to get the booking URL from the searchDestination response
+    url = hotel_match["url"] || booking_url
 
     {
       source: "booking",
-      rating: (data["review_score"].to_f / 2.0).round(1),  # Convert 0-10 → 0-5
-      rating_raw: data["review_score"].to_f,
-      count: data["review_nr"] || 0,
-      url: data["url"],
-      name: data["name"],
-      stars: data["class"]
+      rating: (review_score / 2.0).round(1),  # Convert 0-10 → 0-5
+      rating_raw: review_score,
+      count: review_count,
+      url: url,
+      name: hotel_match["name"]
     }
   rescue => e
     Rails.logger.error("[Aggregator] Booking lookup failed for #{hotel_name}: #{e.message}")
@@ -266,13 +276,13 @@ class HotelAggregator
   end
 
   def booking_connection
-    Faraday.new(url: "https://booking-com.p.rapidapi.com") do |f|
+    Faraday.new(url: "https://booking-com15.p.rapidapi.com") do |f|
       f.request :json
       f.response :json, content_type: /\bjson$/
       f.options.timeout = 10
       f.options.open_timeout = 5
       f.headers["X-RapidAPI-Key"] = ENV.fetch("RAPIDAPI_KEY")
-      f.headers["X-RapidAPI-Host"] = "booking-com.p.rapidapi.com"
+      f.headers["X-RapidAPI-Host"] = "booking-com15.p.rapidapi.com"
     end
   end
 
