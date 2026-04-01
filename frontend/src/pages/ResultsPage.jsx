@@ -1,11 +1,12 @@
 // src/pages/ResultsPage.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Map, LayoutGrid, AlertCircle, RefreshCw } from "lucide-react";
 import SearchBar from "../components/SearchBar";
 import KeywordFilter from "../components/KeywordFilter";
 import HotelList from "../components/HotelList";
 import MapView from "../components/MapView";
+import PriceFilter from "../components/PriceFilter";
 import { searchHotels } from "../api/client";
 
 export default function ResultsPage() {
@@ -19,7 +20,8 @@ export default function ResultsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [keywords, setKeywords] = useState(keywordsParam.split(","));
-    const [viewMode, setViewMode] = useState("grid"); // "grid" or "map"
+    const [viewMode, setViewMode] = useState("grid");
+    const [priceFilter, setPriceFilter] = useState({ min: 0, max: Infinity, includeNoPrices: true });
 
     // Fetch hotels when URL params change
     const fetchHotels = useCallback(async () => {
@@ -49,6 +51,16 @@ export default function ResultsPage() {
         fetchHotels();
     }, [fetchHotels]);
 
+    // Filter hotels by price
+    const filteredHotels = useMemo(() => {
+        return hotels.filter((hotel) => {
+            if (hotel.price_per_night == null) {
+                return priceFilter.includeNoPrices;
+            }
+            return hotel.price_per_night >= priceFilter.min && hotel.price_per_night <= priceFilter.max;
+        });
+    }, [hotels, priceFilter]);
+
     const handleNewSearch = (newLocation) => {
         const params = new URLSearchParams({
             location: newLocation,
@@ -65,9 +77,15 @@ export default function ResultsPage() {
         navigate(`/results?${params.toString()}`);
     };
 
+    const handlePriceFilterChange = useCallback((filter) => {
+        setPriceFilter(filter);
+    }, []);
+
     // Count hotels by source for the summary
-    const sourceCounts = hotels.reduce((acc, h) => {
-        acc[h.source] = (acc[h.source] || 0) + 1;
+    const sourceCounts = filteredHotels.reduce((acc, h) => {
+        (h.sources || [h.source]).forEach((s) => {
+            acc[s] = (acc[s] || 0) + 1;
+        });
         return acc;
     }, {});
 
@@ -87,76 +105,93 @@ export default function ResultsPage() {
                 </button>
             </div>
 
-            {/* Results header bar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
-                <div>
-                    <h2 className="text-xl font-semibold text-gray-700">
-                        {loading
-                            ? "Searching across all providers..."
-                            : `${hotels.length} hotel${hotels.length !== 1 ? "s" : ""} found`}
-                    </h2>
-                    {!loading && hotels.length > 0 && (
-                        <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
-                            {Object.entries(sourceCounts)
-                                .map(([src, count]) => `${count} from ${src}`)
-                                .join(" · ")}
-                        </p>
+            {/* Main content area with sidebar */}
+            <div className="flex flex-col lg:flex-row gap-6">
+                {/* Sidebar filters */}
+                {!loading && hotels.length > 0 && (
+                    <div className="lg:w-72 shrink-0">
+                        <div className="sticky top-24">
+                            <PriceFilter hotels={hotels} onFilterChange={handlePriceFilterChange} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Results */}
+                <div className="flex-1">
+                    {/* Results header bar */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-700">
+                                {loading
+                                    ? "Searching across all providers..."
+                                    : `${filteredHotels.length} hotel${filteredHotels.length !== 1 ? "s" : ""} found`}
+                            </h2>
+                            {!loading && filteredHotels.length > 0 && (
+                                <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
+                                    {filteredHotels.length !== hotels.length && (
+                                        <span>{hotels.length} total, {filteredHotels.length} in price range · </span>
+                                    )}
+                                    {Object.entries(sourceCounts)
+                                        .map(([src, count]) => `${count} from ${src}`)
+                                        .join(" · ")}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* View toggle */}
+                        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                            <button
+                                onClick={() => setViewMode("grid")}
+                                className={`p-2 rounded-md transition-colors ${
+                                    viewMode === "grid" ? "bg-white shadow-sm text-rose-800" : "text-gray-400 hover:text-gray-600"
+                                }`}
+                                title="Grid view"
+                            >
+                                <LayoutGrid className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode("map")}
+                                className={`p-2 rounded-md transition-colors ${
+                                    viewMode === "map" ? "bg-white shadow-sm text-rose-800" : "text-gray-400 hover:text-gray-600"
+                                }`}
+                                title="Map view"
+                            >
+                                <Map className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Error state */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl mb-6
+                            flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                                <p>Something went wrong while searching. Please try again.</p>
+                                <button
+                                    onClick={fetchHotels}
+                                    className="mt-2 inline-flex items-center gap-1 text-sm font-medium
+                             text-red-800 hover:underline"
+                                >
+                                    <RefreshCw className="w-3 h-3" /> Try again
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Results */}
+                    {viewMode === "grid" ? (
+                        <HotelList hotels={filteredHotels} loading={loading} />
+                    ) : (
+                        <>
+                            <MapView hotels={filteredHotels} />
+                            <div className="mt-8">
+                                <HotelList hotels={filteredHotels} loading={loading} />
+                            </div>
+                        </>
                     )}
                 </div>
-
-                {/* View toggle */}
-                <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-                    <button
-                        onClick={() => setViewMode("grid")}
-                        className={`p-2 rounded-md transition-colors ${
-                            viewMode === "grid" ? "bg-white shadow-sm text-rose-800" : "text-gray-400 hover:text-gray-600"
-                        }`}
-                        title="Grid view"
-                    >
-                        <LayoutGrid className="w-5 h-5" />
-                    </button>
-                    <button
-                        onClick={() => setViewMode("map")}
-                        className={`p-2 rounded-md transition-colors ${
-                            viewMode === "map" ? "bg-white shadow-sm text-rose-800" : "text-gray-400 hover:text-gray-600"
-                        }`}
-                        title="Map view"
-                    >
-                        <Map className="w-5 h-5" />
-                    </button>
-                </div>
             </div>
-
-            {/* Error state */}
-            {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl mb-6
-                        flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                        <p>{error}</p>
-                        <button
-                            onClick={fetchHotels}
-                            className="mt-2 inline-flex items-center gap-1 text-sm font-medium
-                         text-red-800 hover:underline"
-                        >
-                            <RefreshCw className="w-3 h-3" /> Try again
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Results */}
-            {viewMode === "grid" ? (
-                <HotelList hotels={hotels} loading={loading} />
-            ) : (
-                <>
-                    <MapView hotels={hotels} />
-                    {/* Show list below map too */}
-                    <div className="mt-8">
-                        <HotelList hotels={hotels} loading={loading} />
-                    </div>
-                </>
-            )}
         </div>
     );
 }

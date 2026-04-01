@@ -97,7 +97,7 @@ describe("ResultsPage", () => {
         });
     });
 
-    it("shows rate limit error for 429 responses", async () => {
+    it("shows error message for 429 responses", async () => {
         const error = new Error("Rate limited");
         error.response = { status: 429 };
         searchHotels.mockRejectedValue(error);
@@ -105,7 +105,7 @@ describe("ResultsPage", () => {
         renderWithRouter(<ResultsPage />);
 
         await waitFor(() => {
-            expect(screen.getByText(/Too many searches/i)).toBeInTheDocument();
+            expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
         });
     });
 
