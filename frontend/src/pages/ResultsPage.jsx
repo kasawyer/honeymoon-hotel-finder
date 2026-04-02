@@ -1,14 +1,14 @@
 // src/pages/ResultsPage.jsx
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Map, LayoutGrid, AlertCircle, RefreshCw } from "lucide-react";
+import { Map, LayoutGrid, AlertCircle, RefreshCw, SlidersHorizontal } from "lucide-react";
 import SearchBar from "../components/SearchBar";
 import KeywordFilter from "../components/KeywordFilter";
 import HotelList from "../components/HotelList";
 import MapView from "../components/MapView";
 import PriceFilter from "../components/PriceFilter";
-import { searchHotels } from "../api/client";
 import RatingFilter from "../components/RatingFilter";
+import { searchHotels } from "../api/client";
 
 export default function ResultsPage() {
     const [searchParams] = useSearchParams();
@@ -24,6 +24,7 @@ export default function ResultsPage() {
     const [viewMode, setViewMode] = useState("grid");
     const [priceFilter, setPriceFilter] = useState({ min: 0, max: Infinity, includeNoPrices: true });
     const [minRating, setMinRating] = useState(0);
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Fetch hotels when URL params change
     const fetchHotels = useCallback(async () => {
@@ -81,7 +82,11 @@ export default function ResultsPage() {
         navigate(`/results?${params.toString()}`);
     };
 
-    const handleApplyFilters = () => {
+    const handleKeywordChange = (newKeywords) => {
+        setKeywords(newKeywords);
+    };
+
+    const handleApplyKeywords = () => {
         const params = new URLSearchParams({
             location,
             keywords: keywords.join(","),
@@ -101,30 +106,60 @@ export default function ResultsPage() {
         return acc;
     }, {});
 
-    return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-            {/* Search + filters header */}
-            <div className="flex flex-col items-center gap-4 mb-8">
-                <SearchBar onSearch={handleNewSearch} initialValue={location} />
-                <KeywordFilter selected={keywords} onChange={setKeywords} />
+    // Sidebar content — shared between desktop and mobile
+    const filterSidebar = (
+        <div className="space-y-4">
+            <PriceFilter hotels={hotels} onFilterChange={handlePriceFilterChange} />
+            <RatingFilter value={minRating} onChange={setMinRating} hotels={hotels} />
+
+            {/* Keywords */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <p className="text-sm font-semibold text-gray-700 mb-3">Keywords</p>
+                <KeywordFilter selected={keywords} onChange={handleKeywordChange} />
                 <button
-                    onClick={handleApplyFilters}
-                    className="px-6 py-2 rounded-full text-white text-sm font-medium
+                    onClick={handleApplyKeywords}
+                    className="mt-4 w-full py-2 rounded-full text-white text-sm font-medium
                      hover:brightness-110 transition-all"
                     style={{ backgroundColor: "var(--color-primary)" }}
                 >
-                    Apply Filters
+                    Update Search
                 </button>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+            {/* Search header */}
+            <div className="flex flex-col items-center gap-4 mb-8">
+                <SearchBar onSearch={handleNewSearch} initialValue={location} />
+            </div>
+
+            {/* Mobile filter toggle */}
+            <div className="lg:hidden mb-4">
+                <button
+                    onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-white rounded-xl
+                     border border-gray-200 text-sm font-medium text-gray-700"
+                >
+                    <SlidersHorizontal className="w-4 h-4" />
+                    {showMobileFilters ? "Hide Filters" : "Show Filters"}
+                </button>
+                {showMobileFilters && (
+                    <div className="mt-4">
+                        {filterSidebar}
+                    </div>
+                )}
             </div>
 
             {/* Main content area with sidebar */}
             <div className="flex flex-col lg:flex-row gap-6">
-                {/* Sidebar filters */}
+                {/* Desktop sidebar filters */}
                 {!loading && hotels.length > 0 && (
-                    <div className="lg:w-72 shrink-0">
-                        <div className="sticky top-24 space-y-4">
-                            <PriceFilter hotels={hotels} onFilterChange={handlePriceFilterChange} />
-                            <RatingFilter value={minRating} onChange={setMinRating} hotels={hotels} />
+                    <div className="hidden lg:block lg:w-72 shrink-0">
+                        <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto
+                            pr-2 -mr-2 scrollbar-thin">
+                            {filterSidebar}
                         </div>
                     </div>
                 )}
@@ -142,7 +177,7 @@ export default function ResultsPage() {
                             {!loading && filteredHotels.length > 0 && (
                                 <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
                                     {filteredHotels.length !== hotels.length && (
-                                        <span>{hotels.length} total, {filteredHotels.length} in price range · </span>
+                                        <span>{hotels.length} total, {filteredHotels.length} matching filters · </span>
                                     )}
                                     {Object.entries(sourceCounts)
                                         .map(([src, count]) => `${count} from ${src}`)
