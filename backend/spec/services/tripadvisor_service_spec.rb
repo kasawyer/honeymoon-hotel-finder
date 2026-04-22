@@ -18,19 +18,19 @@ RSpec.describe TripadvisorService do
             status: true,
             message: "Success",
             timestamp: 1774466935110,
-            data: [{
+            data: [ {
                      title: "<b>Paris</b>",
                      geoId: 187147,
                      documentId: "loc;187147;g187147",
                      trackingItems: "CITY",
                      secondaryText: "Ile-de-France, France"
-                   }]
+                   } ]
           }.to_json
         )
     end
 
     let(:hotel_results) do
-      [{
+      [ {
          id: "197528",
          title: "1. Le Royal Monceau - Raffles Paris",
          primaryInfo: "Free breakfast available",
@@ -42,7 +42,7 @@ RSpec.describe TripadvisorService do
          priceForDisplay: "$1,660",
          strikethroughPrice: nil,
          priceDetails: "Free cancellation",
-         cardPhotos: [{
+         cardPhotos: [ {
                         __typename: "AppPresentation_PhotoItem",
                         sizes: {
                           __typename: "AppPresentation_PhotoItemSizeDynamic",
@@ -50,7 +50,7 @@ RSpec.describe TripadvisorService do
                           maxWidth: 7282,
                           urlTemplate: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/31/68/6d/73/facade.jpg?w={width}&h={height}&s=1"
                         }
-                      }],
+                      } ],
          commerceInfo: {
            externalUrl: "https://www.tripadvisor.in/Commerce?p=Accor&src=171740821&geo=197528",
            provider: "Raffles",
@@ -58,7 +58,7 @@ RSpec.describe TripadvisorService do
            details: { text: "Free cancellation" },
            commerceSummary: { text: "View all 8 deals from $1,660" }
          }
-       }]
+       } ]
     end
 
     it "resolves geo ID and returns normalized hotels" do
@@ -80,7 +80,7 @@ RSpec.describe TripadvisorService do
         location: "Paris",
         check_in: "2026-04-01",
         check_out: "2026-04-04",
-        keywords: ["romantic"]
+        keywords: [ "romantic" ]
       )
 
       expect(results.length).to eq(1)
@@ -120,7 +120,7 @@ RSpec.describe TripadvisorService do
         location: "Paris",
         check_in: "2026-04-01",
         check_out: "2026-04-04",
-        keywords: ["romantic"]
+        keywords: [ "romantic" ]
       )
 
       # Only the one matching "romantic" should be returned
@@ -146,7 +146,7 @@ RSpec.describe TripadvisorService do
         location: "Paris",
         check_in: "2026-04-01",
         check_out: "2026-04-04",
-        keywords: ["nonexistentkeyword"]
+        keywords: [ "nonexistentkeyword" ]
       )
 
       # Should return all hotels as fallback
@@ -202,7 +202,7 @@ RSpec.describe TripadvisorService do
           body: {
             status: true,
             message: "Success",
-            data: { data: [hotel_no_photos] }
+            data: { data: [ hotel_no_photos ] }
           }.to_json
         )
 
@@ -233,7 +233,7 @@ RSpec.describe TripadvisorService do
           body: {
             status: true,
             message: "Success",
-            data: { data: [hotel_no_price] }
+            data: { data: [ hotel_no_price ] }
           }.to_json
         )
 
@@ -258,7 +258,7 @@ RSpec.describe TripadvisorService do
             status: true,
             message: "Success",
             data: {
-              data: [hotel_results.first.merge(priceForDisplay: "$2,450")]
+              data: [ hotel_results.first.merge(priceForDisplay: "$2,450") ]
             }
           }.to_json
         )

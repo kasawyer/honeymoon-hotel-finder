@@ -8,5 +8,3 @@ export function renderWithRouter(ui, options = {}) {
         ...options,
     });
 }
-
-export * from "@testing-library/react";

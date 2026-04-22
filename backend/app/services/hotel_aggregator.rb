@@ -44,7 +44,7 @@ class HotelAggregator
     merged = enrich_hotels(ta_hotels)
 
     # 5. Sort by combined rating descending, then price ascending
-    sorted = merged.sort_by { |h| [-(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY)] }
+    sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
 
     # 6. Cache
     write_cache(cache_key, sorted)
@@ -130,7 +130,7 @@ class HotelAggregator
     return nil unless loc_response.success?
 
     locations = loc_response.body.dig("data") || []
-    locations = [locations] if locations.is_a?(Hash)
+    locations = [ locations ] if locations.is_a?(Hash)
 
     # Find the best match — prefer type "ho" (hotel) and matching city
     city_filter = @location.split(",").first.strip.downcase
@@ -151,7 +151,7 @@ class HotelAggregator
     return nil unless scores_response.success?
 
     score_data = scores_response.body.dig("data") || []
-    score_data = [score_data] if score_data.is_a?(Hash)
+    score_data = [ score_data ] if score_data.is_a?(Hash)
 
     # Find the "total" customer_type entry for overall score
     breakdown = score_data.first&.dig("score_breakdown") || []
@@ -181,7 +181,7 @@ class HotelAggregator
 
   def build_merged_hotel(ta_hotel, google_data, booking_data)
     source_ratings = []
-    sources = ["tripadvisor"]
+    sources = [ "tripadvisor" ]
 
     # TripAdvisor rating (already on 0-5 scale)
     if ta_hotel[:rating].present?
@@ -301,7 +301,7 @@ class HotelAggregator
         created_at: Time.current,
         updated_at: Time.current
       },
-      unique_by: [:location, :query]
+      unique_by: [ :location, :query ]
     )
   rescue => e
     Rails.logger.error("[Aggregator] Cache write failed: #{e.message}")

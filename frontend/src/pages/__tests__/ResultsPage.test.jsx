@@ -1,7 +1,6 @@
 // src/pages/__tests__/ResultsPage.test.jsx
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { renderWithRouter } from "../../test/test-utils";
 import ResultsPage from "../ResultsPage";
 

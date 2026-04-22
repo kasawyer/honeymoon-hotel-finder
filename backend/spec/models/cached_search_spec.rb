@@ -26,7 +26,7 @@ RSpec.describe CachedSearch, type: :model do
       search = CachedSearch.create!(
         location: "paris",
         query: "romantic,honeymoon",
-        results: [{ name: "Hotel Amour" }],
+        results: [ { name: "Hotel Amour" } ],
         expires_at: 1.hour.from_now
       )
       found = CachedSearch.find_valid(location: "Paris", query: "romantic,honeymoon")
@@ -37,7 +37,7 @@ RSpec.describe CachedSearch, type: :model do
       CachedSearch.create!(
         location: "paris",
         query: "romantic,honeymoon",
-        results: [{ name: "Hotel Amour" }],
+        results: [ { name: "Hotel Amour" } ],
         expires_at: 1.hour.ago
       )
       found = CachedSearch.find_valid(location: "Paris", query: "romantic,honeymoon")

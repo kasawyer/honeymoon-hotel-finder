@@ -1,5 +1,5 @@
 // src/components/PriceFilter.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { DollarSign } from "lucide-react";
 
 export default function PriceFilter({ hotels, onFilterChange }) {
@@ -14,11 +14,15 @@ export default function PriceFilter({ hotels, onFilterChange }) {
 
     const [range, setRange] = useState([priceMin, priceMax]);
     const [includeNoPrices, setIncludeNoPrices] = useState(true);
+    const [prevPriceMin, setPrevPriceMin] = useState(priceMin);
+    const [prevPriceMax, setPrevPriceMax] = useState(priceMax);
 
-    // Reset range when hotels change (new search)
-    useEffect(() => {
+    // Reset range when hotels change (new search) — no useEffect needed
+    if (priceMin !== prevPriceMin || priceMax !== prevPriceMax) {
         setRange([priceMin, priceMax]);
-    }, [priceMin, priceMax]);
+        setPrevPriceMin(priceMin);
+        setPrevPriceMax(priceMax);
+    }
 
     // Notify parent of filter changes
     useEffect(() => {

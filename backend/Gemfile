@@ -54,7 +54,7 @@ gem "faraday-retry"
 gem "jsonapi-serializer"
 
 # Environment variables in development
-gem "dotenv-rails", groups: [:development, :test]
+gem "dotenv-rails", groups: [ :development, :test ]
 
 # Rate limiting
 gem "rack-attack"
@@ -68,4 +68,11 @@ group :development, :test do
   gem "webmock"
   gem "vcr"
   gem "pry-rails"
+end
+
+gem "rubocop", "~> 1.86", groups: [ :development, :test ]
+gem "rubocop-rails", "~> 2.34", groups: [ :development, :test ]
+
+group :test do
+  gem "simplecov", require: false
 end

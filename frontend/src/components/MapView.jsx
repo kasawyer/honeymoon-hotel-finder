@@ -23,7 +23,7 @@ export default function MapView({ hotels }) {
         libraries: LIBRARIES,
     });
 
-    const [selected, setSelected] = useState(null);
+    const [selectedHotel, setSelectedHotel] = useState(null);
 
     // Calculate map center from hotel coordinates
     const center = useMemo(() => {
@@ -65,7 +65,7 @@ export default function MapView({ hotels }) {
                     <MarkerF
                         key={`${hotel.source}-${hotel.external_id}-${i}`}
                         position={{ lat: hotel.latitude, lng: hotel.longitude }}
-                        onClick={() => setSelected(hotel)}
+                        onClick={() => setSelectedHotel(hotel)}
                         title={hotel.name}
                     />
                 ))}

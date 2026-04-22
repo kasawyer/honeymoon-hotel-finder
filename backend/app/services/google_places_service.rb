@@ -44,7 +44,7 @@ class GooglePlacesService < ApiClient
         "places.photos"
       ].join(",")
       req.body = {
-        includedTypes: ["lodging"],
+        includedTypes: [ "lodging" ],
         maxResultCount: 20,
         rankPreference: "POPULARITY",
         locationRestriction: {
@@ -79,7 +79,7 @@ class GooglePlacesService < ApiClient
     response = places_connection.post("/v1/places:autocomplete") do |req|
       req.body = {
         input: query,
-        includedPrimaryTypes: ["(cities)"]
+        includedPrimaryTypes: [ "(cities)" ]
       }.to_json
     end
     data = handle_response(response, source: "Google Places")

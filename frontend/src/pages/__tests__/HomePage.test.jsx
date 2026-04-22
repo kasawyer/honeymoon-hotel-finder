@@ -1,5 +1,5 @@
 // src/pages/__tests__/HomePage.test.jsx
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithRouter } from "../../test/test-utils";

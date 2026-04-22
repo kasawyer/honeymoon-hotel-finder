@@ -45,9 +45,9 @@ class TripadvisorService < ApiClient
                    searchable = clean_title(h["title"]).downcase
                    keywords.any? { |kw| searchable.include?(kw.downcase) }
                  end
-               else
+    else
                  hotels
-               end
+    end
 
     results_to_map = filtered.present? ? filtered : hotels.first(20)
     results_to_map.map { |h| normalize(h) }

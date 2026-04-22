@@ -24,7 +24,7 @@ class ApiClient
       f.request :json
       f.response :json, content_type: /\bjson$/
       f.request :retry, max: 2, interval: 0.5, interval_randomness: 0.5,
-                exceptions: [Faraday::TimeoutError, Faraday::ConnectionFailed]
+                exceptions: [ Faraday::TimeoutError, Faraday::ConnectionFailed ]
       f.options.timeout = 15       # 15 second read timeout
       f.options.open_timeout = 5   # 5 second connection timeout
       f.headers["X-RapidAPI-Key"] = ENV.fetch("RAPIDAPI_KEY")

@@ -3,11 +3,11 @@ require "rails_helper"
 
 RSpec.describe "POST /api/v1/searches", type: :request do
   let(:mock_results) do
-    [{
+    [ {
        name: "Test Hotel",
        combined_rating: 4.5,
        total_reviews: 5000,
-       sources: ["tripadvisor", "google", "booking"],
+       sources: [ "tripadvisor", "google", "booking" ],
        source_ratings: [
          { source: "tripadvisor", rating: 4.5, count: 2000 },
          { source: "google", rating: 4.6, count: 2500 },
@@ -16,7 +16,7 @@ RSpec.describe "POST /api/v1/searches", type: :request do
        price_per_night: 250.0,
        image_url: "https://example.com/photo.jpg",
        url: "https://booking.com/hotel/test"
-     }]
+     } ]
   end
 
   before do
@@ -44,7 +44,7 @@ RSpec.describe "POST /api/v1/searches", type: :request do
 
   it "accepts keywords as a comma-separated string" do
     expect(HotelAggregator).to receive(:new).with(
-      hash_including(keywords: ["romantic", "spa"])
+      hash_including(keywords: [ "romantic", "spa" ])
     ).and_return(instance_double(HotelAggregator, search: mock_results))
 
     post "/api/v1/searches", params: { location: "Bali", keywords: "romantic,spa" }, as: :json
@@ -53,10 +53,10 @@ RSpec.describe "POST /api/v1/searches", type: :request do
 
   it "accepts keywords as an array" do
     expect(HotelAggregator).to receive(:new).with(
-      hash_including(keywords: ["luxury", "honeymoon"])
+      hash_including(keywords: [ "luxury", "honeymoon" ])
     ).and_return(instance_double(HotelAggregator, search: mock_results))
 
-    post "/api/v1/searches", params: { location: "Bali", keywords: ["luxury", "honeymoon"] }, as: :json
+    post "/api/v1/searches", params: { location: "Bali", keywords: [ "luxury", "honeymoon" ] }, as: :json
     expect(response).to have_http_status(:ok)
   end
 

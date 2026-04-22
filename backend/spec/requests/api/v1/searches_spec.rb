@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "POST /api/v1/searches", type: :request do
   let(:mock_results) do
-    [{ source: "google", name: "Test Hotel", rating: 4.5 }]
+    [ { source: "google", name: "Test Hotel", rating: 4.5 } ]
   end
 
   before do
@@ -31,7 +31,7 @@ RSpec.describe "POST /api/v1/searches", type: :request do
 
   it "accepts keywords as a comma-separated string" do
     expect(HotelAggregator).to receive(:new).with(
-      hash_including(keywords: ["romantic", "spa"])
+      hash_including(keywords: [ "romantic", "spa" ])
     ).and_return(instance_double(HotelAggregator, search: mock_results).tap { |a|
       allow(a).to receive(:send).with(:build_cache_key).and_return("romantic,spa")
     })
@@ -42,12 +42,12 @@ RSpec.describe "POST /api/v1/searches", type: :request do
 
   it "accepts keywords as an array" do
     expect(HotelAggregator).to receive(:new).with(
-      hash_including(keywords: ["luxury", "honeymoon"])
+      hash_including(keywords: [ "luxury", "honeymoon" ])
     ).and_return(instance_double(HotelAggregator, search: mock_results).tap { |a|
       allow(a).to receive(:send).with(:build_cache_key).and_return("honeymoon,luxury")
     })
 
-    post "/api/v1/searches", params: { location: "Bali", keywords: ["luxury", "honeymoon"] }, as: :json
+    post "/api/v1/searches", params: { location: "Bali", keywords: [ "luxury", "honeymoon" ] }, as: :json
     expect(response).to have_http_status(:ok)
   end
 end

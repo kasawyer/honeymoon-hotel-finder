@@ -15,12 +15,12 @@ RSpec.describe GooglePlacesService do
           status: 200,
           headers: { "Content-Type" => "application/json" },
           body: {
-            places: [{
+            places: [ {
                        id: "ChIJD7fiBh9u5kcRYJSMaMOCCwQ",
                        location: { latitude: 48.8566, longitude: 2.3522 },
                        formattedAddress: "Paris, France",
                        displayName: { text: "Paris", languageCode: "en" }
-                     }]
+                     } ]
           }.to_json
         )
 
@@ -62,7 +62,7 @@ RSpec.describe GooglePlacesService do
           status: 200,
           headers: { "Content-Type" => "application/json" },
           body: {
-            places: [{
+            places: [ {
                        id: "abc123",
                        displayName: { text: "Romantic Paris Hotel", languageCode: "en" },
                        formattedAddress: "1 Rue de Rivoli, Paris, France",
@@ -70,17 +70,17 @@ RSpec.describe GooglePlacesService do
                        rating: 4.5,
                        userRatingCount: 1200,
                        priceLevel: "PRICE_LEVEL_MODERATE",
-                       photos: [{
+                       photos: [ {
                                   name: "places/abc123/photos/photo_ref_123"
-                                }]
-                     }]
+                                } ]
+                     } ]
           }.to_json
         )
 
       results = service.search_hotels(
         latitude: 48.8566,
         longitude: 2.3522,
-        keywords: ["romantic"]
+        keywords: [ "romantic" ]
       )
 
       expect(results.length).to eq(1)
@@ -103,21 +103,21 @@ RSpec.describe GooglePlacesService do
           status: 200,
           headers: { "Content-Type" => "application/json" },
           body: {
-            places: [{
+            places: [ {
                        id: "xyz789",
                        displayName: { text: "Grand Hotel", languageCode: "en" },
                        formattedAddress: "Paris",
                        location: { latitude: 48.86, longitude: 2.35 },
                        rating: 4.0,
                        userRatingCount: 500
-                     }]
+                     } ]
           }.to_json
         )
 
       results = service.search_hotels(
         latitude: 48.8566,
         longitude: 2.3522,
-        keywords: ["nonexistentkeyword"]
+        keywords: [ "nonexistentkeyword" ]
       )
 
       # Falls back to all results when no keyword matches
@@ -136,7 +136,7 @@ RSpec.describe GooglePlacesService do
       results = service.search_hotels(
         latitude: 48.8566,
         longitude: 2.3522,
-        keywords: ["romantic"]
+        keywords: [ "romantic" ]
       )
 
       expect(results).to eq([])
@@ -148,21 +148,21 @@ RSpec.describe GooglePlacesService do
           status: 200,
           headers: { "Content-Type" => "application/json" },
           body: {
-            places: [{
+            places: [ {
                        id: "no_photo",
                        displayName: { text: "Budget Romantic Inn", languageCode: "en" },
                        formattedAddress: "Paris",
                        location: { latitude: 48.86, longitude: 2.35 },
                        rating: 3.5,
                        userRatingCount: 50
-                     }]
+                     } ]
           }.to_json
         )
 
       results = service.search_hotels(
         latitude: 48.8566,
         longitude: 2.3522,
-        keywords: ["romantic"]
+        keywords: [ "romantic" ]
       )
 
       expect(results.first[:image_url]).to be_nil

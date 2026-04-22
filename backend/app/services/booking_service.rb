@@ -59,9 +59,9 @@ class BookingService < ApiClient
                    searchable = "#{h['hotel_name']} #{h['hotel_name_trans']} #{h['unit_configuration_label']}".downcase
                    keywords.any? { |kw| searchable.include?(kw.downcase) }
                  end
-               else
+    else
                  hotels
-               end
+    end
 
     # If keyword filtering returns nothing, return all results
     # (the search itself is already hotel-focused)
@@ -75,7 +75,7 @@ class BookingService < ApiClient
       source: "booking",
       external_id: hotel["hotel_id"].to_s,
       name: hotel["hotel_name"],
-      address: [hotel["address"], hotel["city"], hotel["country_trans"]].compact.join(", "),
+      address: [ hotel["address"], hotel["city"], hotel["country_trans"] ].compact.join(", "),
       latitude: hotel["latitude"]&.to_f,
       longitude: hotel["longitude"]&.to_f,
       rating: hotel["review_score"]&.to_f&./(2.0),  # Convert 0-10 → 0-5

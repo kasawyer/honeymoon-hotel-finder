@@ -7,11 +7,11 @@ module Api
 
         keywords = if params[:keywords].is_a?(Array)
                      params[:keywords]
-                   elsif params[:keywords].is_a?(String)
+        elsif params[:keywords].is_a?(String)
                      params[:keywords].split(",").map(&:strip)
-                   else
+        else
                      nil
-                   end
+        end
 
         aggregator = HotelAggregator.new(
           location: location,

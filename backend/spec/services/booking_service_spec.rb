@@ -14,7 +14,7 @@ RSpec.describe BookingService do
         .to_return(
           status: 200,
           headers: { "Content-Type" => "application/json" },
-          body: [{ "dest_id" => "-1456928", "dest_type" => "city" }].to_json
+          body: [ { "dest_id" => "-1456928", "dest_type" => "city" } ].to_json
         )
 
       # Stub hotel search
@@ -23,7 +23,7 @@ RSpec.describe BookingService do
           status: 200,
           headers: { "Content-Type" => "application/json" },
           body: {
-            result: [{
+            result: [ {
               hotel_id: 12345,
               hotel_name: "Honeymoon Palace",
               address: "123 Love Lane",
@@ -38,7 +38,7 @@ RSpec.describe BookingService do
               composite_price_breakdown: {
                 gross_amount_per_night: { value: 250.00 }
               }
-            }]
+            } ]
           }.to_json
         )
 
@@ -46,7 +46,7 @@ RSpec.describe BookingService do
         location: "Paris",
         check_in: "2025-06-01",
         check_out: "2025-06-04",
-        keywords: ["honeymoon"]
+        keywords: [ "honeymoon" ]
       )
 
       expect(results.length).to eq(1)

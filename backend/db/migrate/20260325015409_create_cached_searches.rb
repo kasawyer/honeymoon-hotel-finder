@@ -11,6 +11,6 @@ class CreateCachedSearches < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :cached_searches, [:location, :query], unique: true
+    add_index :cached_searches, [ :location, :query ], unique: true
   end
 end
