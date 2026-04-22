@@ -17,7 +17,7 @@
 #
 class HotelAggregator
   DEFAULT_KEYWORDS = %w[romantic honeymoon anniversary].freeze
-  MAX_HOTELS = 10
+  MAX_HOTELS = 20
 
   def initialize(location:, check_in: nil, check_out: nil, keywords: nil)
     @location = location

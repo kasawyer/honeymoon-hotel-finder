@@ -36,3 +36,4 @@ npm run dev
 Visit http://localhost:5173
 
 [![Maintainability](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder/maintainability.svg)](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder)
+[![Code Coverage](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder/coverage.svg)](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder)

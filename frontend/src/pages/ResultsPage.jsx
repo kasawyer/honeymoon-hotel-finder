@@ -6,6 +6,7 @@ import SearchBar from "../components/SearchBar";
 import KeywordFilter from "../components/KeywordFilter";
 import HotelList from "../components/HotelList";
 import MapView from "../components/MapView";
+import Pagination from "../components/Pagination";
 import PriceFilter from "../components/PriceFilter";
 import RatingFilter from "../components/RatingFilter";
 import { searchHotels } from "../api/client";
@@ -25,6 +26,8 @@ export default function ResultsPage() {
     const [priceFilter, setPriceFilter] = useState({ min: 0, max: Infinity, includeNoPrices: true });
     const [minRating, setMinRating] = useState(0);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
+    const HOTELS_PER_PAGE = 20;
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Fetch hotels when URL params change
     const fetchHotels = useCallback(async () => {
@@ -54,6 +57,11 @@ export default function ResultsPage() {
         fetchHotels();
     }, [fetchHotels]);
 
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [priceFilter, minRating, hotels]);
+
     // Filter hotels by price and rating
     const filteredHotels = useMemo(() => {
         return hotels.filter((hotel) => {
@@ -73,6 +81,18 @@ export default function ResultsPage() {
             return true;
         });
     }, [hotels, priceFilter, minRating]);
+
+    // Paginate filtered hotels
+    const totalPages = Math.ceil(filteredHotels.length / HOTELS_PER_PAGE);
+    const paginatedHotels = useMemo(() => {
+        const start = (currentPage - 1) * HOTELS_PER_PAGE;
+        return filteredHotels.slice(start, start + HOTELS_PER_PAGE);
+    }, [filteredHotels, currentPage]);
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
 
     const handleNewSearch = (newLocation) => {
         const params = new URLSearchParams({
@@ -229,12 +249,24 @@ export default function ResultsPage() {
 
                     {/* Results */}
                     {viewMode === "grid" ? (
-                        <HotelList hotels={filteredHotels} loading={loading} />
+                        <>
+                            <HotelList hotels={paginatedHotels} loading={loading} />
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        </>
                     ) : (
                         <>
-                            <MapView hotels={filteredHotels} />
+                            <MapView hotels={paginatedHotels} />
                             <div className="mt-8">
-                                <HotelList hotels={filteredHotels} loading={loading} />
+                                <HotelList hotels={paginatedHotels} loading={loading} />
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={handlePageChange}
+                                />
                             </div>
                         </>
                     )}
