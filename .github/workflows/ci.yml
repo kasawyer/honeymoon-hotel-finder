@@ -46,43 +46,18 @@ jobs:
           working-directory: backend
           bundler-cache: true
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.21"
-
-      - name: Build Code Climate test reporter
-        working-directory: .
-        run: |
-          git clone https://github.com/qltysh-archive/test-reporter.git cc-reporter-src
-          cd cc-reporter-src
-          go build -o ../cc-test-reporter ./cmd/cc-test-reporter
-          cd ..
-          rm -rf cc-reporter-src
-          ./cc-test-reporter before-build
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-
       - name: Set up database
         run: bundle exec rails db:schema:load
 
       - name: Run RSpec
         run: bundle exec rspec
 
-      - name: Upload coverage to Code Climate
-        if: success()
-        working-directory: .
-        run: |
-          ./cc-test-reporter format-coverage \
-            -t simplecov \
-            -o coverage/codeclimate.json \
-            backend/coverage/.resultset.json \
-            --prefix backend
-          ./cc-test-reporter upload-coverage \
-            -i coverage/codeclimate.json \
-            --debug
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage/.resultset.json
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   frontend:
     name: Frontend Tests
@@ -105,8 +80,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Vitest
-        run: npx vitest run
+      - name: Run Vitest with coverage
+        run: npx vitest run --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   lint:
     name: Linting
