@@ -32,6 +32,10 @@ jobs:
       GOOGLE_MAPS_API_KEY: test_key
       RAPIDAPI_KEY: test_key
 
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
       - uses: actions/checkout@v4
 
@@ -43,35 +47,28 @@ jobs:
           bundler-cache: true
 
       - name: Set up database
-        working-directory: backend
-        run: |
-          bundle exec rails db:schema:load
-
-      - name: Install Code Climate reporter
-        run: |
-          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-          chmod +x ./cc-test-reporter
-          ./cc-test-reporter before-build
+        run: bundle exec rails db:schema:load
 
       - name: Run RSpec
-        working-directory: backend
         run: bundle exec rspec
 
-      - name: Upload backend coverage to Code Climate
+      - name: Upload coverage to Code Climate
+        uses: paambaati/codeclimate-action@v9.0.0
         if: success()
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-        run: |
-          ./cc-test-reporter format-coverage \
-            -t simplecov \
-            -o coverage/backend.json \
-            backend/coverage/.resultset.json
-          ./cc-test-reporter upload-coverage \
-            -i coverage/backend.json
+        with:
+          debug: true
+          coverageLocations: |
+            ${{ github.workspace }}/backend/coverage/.resultset.json:simplecov
 
   frontend:
-    name: Frontend Tests + Coverage
+    name: Frontend Tests
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -84,12 +81,10 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
 
-      - name: Run Vitest with coverage
-        working-directory: frontend
-        run: npx vitest run --coverage
+      - name: Run Vitest
+        run: npx vitest run
 
   lint:
     name: Linting
