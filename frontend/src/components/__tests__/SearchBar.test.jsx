@@ -122,4 +122,168 @@ describe("SearchBar", () => {
 
         expect(searchLocations).not.toHaveBeenCalled();
     });
+
+    it("shows loading spinner while fetching suggestions", async () => {
+        const user = userEvent.setup();
+        // Create a promise that doesn't resolve immediately
+        let resolveSearch;
+        searchLocations.mockImplementation(
+            () => new Promise((resolve) => { resolveSearch = resolve; })
+        );
+
+        const { container } = render(<SearchBar onSearch={() => {}} />);
+        const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+
+        await user.type(input, "Paris");
+
+        // Wait for the debounce to fire
+        await waitFor(() => {
+            expect(searchLocations).toHaveBeenCalled();
+        });
+
+        // Spinner should be visible while loading
+        const spinner = container.querySelector(".animate-spin");
+        expect(spinner).toBeInTheDocument();
+
+        // Resolve and spinner should disappear
+        resolveSearch([]);
+        await waitFor(() => {
+            expect(container.querySelector(".animate-spin")).not.toBeInTheDocument();
+        });
+    });
+
+    it("navigates suggestions with arrow keys", async () => {
+        const user = userEvent.setup();
+        searchLocations.mockResolvedValue([
+            { place_id: "abc", description: "Paris, France" },
+            { place_id: "def", description: "Paris, TX, USA" },
+        ]);
+
+        render(<SearchBar onSearch={() => {}} />);
+        const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+
+        await user.type(input, "Paris");
+
+        await waitFor(() => {
+            expect(screen.getByText("Paris, France")).toBeInTheDocument();
+        });
+
+        // Arrow down to first suggestion
+        await user.keyboard("{ArrowDown}");
+        // Arrow down to second suggestion
+        await user.keyboard("{ArrowDown}");
+        // Arrow up back to first
+        await user.keyboard("{ArrowUp}");
+        // Enter to select
+        await user.keyboard("{Enter}");
+
+        expect(input).toHaveValue("Paris, France");
+    });
+
+    it("closes suggestions on Escape key", async () => {
+        const user = userEvent.setup();
+        searchLocations.mockResolvedValue([
+            { place_id: "abc", description: "Paris, France" },
+        ]);
+
+        render(<SearchBar onSearch={() => {}} />);
+        const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+
+        await user.type(input, "Paris");
+
+        await waitFor(() => {
+            expect(screen.getByText("Paris, France")).toBeInTheDocument();
+        });
+
+        await user.keyboard("{Escape}");
+
+        expect(screen.queryByText("Paris, France")).not.toBeInTheDocument();
+    });
+
+    it("closes suggestions when clicking outside", async () => {
+        const user = userEvent.setup();
+        searchLocations.mockResolvedValue([
+            { place_id: "abc", description: "Paris, France" },
+        ]);
+
+        render(
+            <div>
+                <div data-testid="outside">Outside area</div>
+                <SearchBar onSearch={() => {}} />
+            </div>
+        );
+        const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+
+        await user.type(input, "Paris");
+
+        await waitFor(() => {
+            expect(screen.getByText("Paris, France")).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByTestId("outside"));
+
+        expect(screen.queryByText("Paris, France")).not.toBeInTheDocument();
+    });
+
+    it("handles API errors gracefully", async () => {
+        const user = userEvent.setup();
+        searchLocations.mockRejectedValue(new Error("Network error"));
+
+        render(<SearchBar onSearch={() => {}} />);
+        const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+
+        await user.type(input, "Paris");
+
+        // Should not crash — just shows no suggestions
+        await waitFor(() => {
+            expect(searchLocations).toHaveBeenCalled();
+        });
+
+        expect(screen.queryByText("Paris, France")).not.toBeInTheDocument();
+    });
+
+    it("trims whitespace from search query", async () => {
+        const user = userEvent.setup();
+        const onSearch = vi.fn();
+
+        render(<SearchBar onSearch={onSearch} />);
+        const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+
+        await user.type(input, "  Bali  ");
+        await user.keyboard("{Enter}");
+
+        expect(onSearch).toHaveBeenCalledWith("Bali");
+    });
+
+    it("reopens suggestions on focus if suggestions exist", async () => {
+        const user = userEvent.setup();
+        searchLocations.mockResolvedValue([
+            { place_id: "abc", description: "Paris, France" },
+        ]);
+
+        render(
+            <div>
+                <button data-testid="other">Other</button>
+                <SearchBar onSearch={() => {}} />
+            </div>
+        );
+        const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+
+        await user.type(input, "Paris");
+
+        await waitFor(() => {
+            expect(screen.getByText("Paris, France")).toBeInTheDocument();
+        });
+
+        // Click away to close
+        await user.click(screen.getByTestId("other"));
+        expect(screen.queryByText("Paris, France")).not.toBeInTheDocument();
+
+        // Focus back on input
+        await user.click(input);
+
+        await waitFor(() => {
+            expect(screen.getByText("Paris, France")).toBeInTheDocument();
+        });
+    });
 });
