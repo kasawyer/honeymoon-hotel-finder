@@ -49,18 +49,23 @@ jobs:
       - name: Set up database
         run: bundle exec rails db:schema:load
 
+      - name: Code Climate - before build
+        uses: aktions/codeclimate-test-reporter@v1
+        with:
+          codeclimate-test-reporter-id: ${{ secrets.CC_TEST_REPORTER_ID }}
+          codeclimate-test-reporter-version: "0.11.1"
+          command: before-build
+
       - name: Run RSpec
         run: bundle exec rspec
 
-      - name: Upload coverage to Code Climate
-        uses: paambaati/codeclimate-action@v9.0.0
+      - name: Code Climate - upload coverage
         if: success()
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        uses: aktions/codeclimate-test-reporter@v1
         with:
-          debug: true
-          coverageLocations: |
-            ${{ github.workspace }}/backend/coverage/.resultset.json:simplecov
+          codeclimate-test-reporter-id: ${{ secrets.CC_TEST_REPORTER_ID }}
+          codeclimate-test-reporter-version: "0.11.1"
+          command: after-build --coverage-input-type simplecov --prefix ${{ github.workspace }}/backend
 
   frontend:
     name: Frontend Tests
