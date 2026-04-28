@@ -46,18 +46,25 @@ jobs:
           working-directory: backend
           bundler-cache: true
 
-      - name: Set up database
-        run: bundle exec rails db:schema:load
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
 
-      - name: Download Code Climate test reporter
+      - name: Build Code Climate test reporter
         working-directory: .
         run: |
-          curl -L -o cc-test-reporter https://github.com/qltysh-archive/test-reporter/releases/download/v0.11.1/cc-test-reporter-linux-amd64
-          chmod +x cc-test-reporter
-          file cc-test-reporter
+          git clone https://github.com/qltysh-archive/test-reporter.git cc-reporter-src
+          cd cc-reporter-src
+          go build -o ../cc-test-reporter ./cmd/cc-test-reporter
+          cd ..
+          rm -rf cc-reporter-src
           ./cc-test-reporter before-build
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+
+      - name: Set up database
+        run: bundle exec rails db:schema:load
 
       - name: Run RSpec
         run: bundle exec rspec
