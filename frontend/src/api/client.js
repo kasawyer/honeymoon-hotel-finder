@@ -4,9 +4,9 @@ import axios from "axios";
 // In development, Vite proxy handles /api/* → Rails
 // In production, same origin (Rails serves React static files)
 const client = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "",
-    headers: { "Content-Type": "application/json" },
-    timeout: 30000, // 30s — API aggregation can be slow
+  baseURL: import.meta.env.VITE_API_URL || "",
+  headers: { "Content-Type": "application/json" },
+  timeout: 30000, // 30s — API aggregation can be slow
 });
 
 /**
@@ -19,13 +19,13 @@ const client = axios.create({
  * @returns {Promise<{location, keywords, count, hotels}>}
  */
 export async function searchHotels({ location, keywords, checkIn, checkOut }) {
-    const response = await client.post("/api/v1/searches", {
-        location,
-        keywords,
-        check_in: checkIn,
-        check_out: checkOut,
-    });
-    return response.data;
+  const response = await client.post("/api/v1/searches", {
+    location,
+    keywords,
+    check_in: checkIn,
+    check_out: checkOut,
+  });
+  return response.data;
 }
 
 /**
@@ -34,11 +34,11 @@ export async function searchHotels({ location, keywords, checkIn, checkOut }) {
  * @returns {Promise<Array<{place_id, description}>>}
  */
 export async function searchLocations(query) {
-    if (!query || query.length < 2) return [];
-    const response = await client.get("/api/v1/locations", {
-        params: { query },
-    });
-    return response.data.locations;
+  if (!query || query.length < 2) return [];
+  const response = await client.get("/api/v1/locations", {
+    params: { query },
+  });
+  return response.data.locations;
 }
 
 export default client;

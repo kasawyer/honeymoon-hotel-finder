@@ -5,5 +5,5 @@ import "@testing-library/jest-dom/vitest";
 
 // Automatically unmount and clean up after each test
 afterEach(() => {
-    cleanup();
+  cleanup();
 });

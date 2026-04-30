@@ -122,3 +122,7 @@ jobs:
       - name: ESLint
         working-directory: frontend
         run: npx eslint src/
+
+      - name: Prettier
+        working-directory: frontend
+        run: npx prettier --check src/
