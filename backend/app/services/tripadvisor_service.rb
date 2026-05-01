@@ -9,19 +9,21 @@ class TripadvisorService < ApiClient
   def search_hotels(location:, check_in:, check_out:, keywords: [])
     conn = rapidapi_connection(HOST)
 
-    # Step 1: Resolve location to TripAdvisor's geoId
-    geo_id = resolve_geo_id(conn, location)
+    # Step 1: Resolve location to TripAdvisor's geoId (with retry)
+    geo_id = with_retry { resolve_geo_id(conn, location) }
     return [] unless geo_id
 
-    # Step 2: Search hotels
-    response = conn.get("/api/v1/hotels/searchHotels", {
-      geoId: geo_id,
-      checkIn: check_in,
-      checkOut: check_out,
-      adults: 2,
-      rooms: 1,
-      currencyCode: "USD"
-    })
+    # Step 2: Search hotels (with retry)
+    response = with_retry do
+      conn.get("/api/v1/hotels/searchHotels", {
+        geoId: geo_id,
+        checkIn: check_in,
+        checkOut: check_out,
+        adults: 2,
+        rooms: 1,
+        currencyCode: "USD"
+      })
+    end
     data = handle_response(response, source: "TripAdvisor")
 
     hotels = data.dig("data", "data") || []
@@ -32,6 +34,23 @@ class TripadvisorService < ApiClient
   end
 
   private
+
+  def with_retry(max_attempts: 3, base_delay: 2)
+    attempts = 0
+    begin
+      attempts += 1
+      yield
+    rescue ApiError => e
+      if e.status == 429 && attempts < max_attempts
+        delay = base_delay * attempts
+        Rails.logger.warn("[TripadvisorService] Rate limited, retrying in #{delay}s (attempt #{attempts}/#{max_attempts})")
+        sleep(delay)
+        retry
+      else
+        raise
+      end
+    end
+  end
 
   def resolve_geo_id(conn, location)
     response = conn.get("/api/v1/hotels/searchLocation", { query: location })

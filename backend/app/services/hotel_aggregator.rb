@@ -54,6 +54,23 @@ class HotelAggregator
 
   private
 
+  def with_retry(max_attempts: 3, base_delay: 2)
+    attempts = 0
+    begin
+      attempts += 1
+      yield
+    rescue Faraday::Error, StandardError => e
+      if attempts < max_attempts && (e.message.include?("429") || e.message.include?("rate"))
+        delay = base_delay * attempts
+        Rails.logger.warn("[Aggregator] Rate limited, retrying in #{delay}s (attempt #{attempts}/#{max_attempts})")
+        sleep(delay)
+        retry
+      else
+        raise
+      end
+    end
+  end
+
   def build_cache_key
     @keywords.map(&:downcase).sort.join(",")
   end
@@ -123,10 +140,12 @@ class HotelAggregator
   def lookup_booking(hotel_name)
     conn = booking_connection
 
-    # Step 1: Find the hotel's dest_id
-    loc_response = conn.get("/api/v1/hotels/searchDestination", {
-      query: hotel_name
-    })
+    # Step 1: Find the hotel's dest_id (with retry)
+    loc_response = with_retry do
+      resp = conn.get("/api/v1/hotels/searchDestination", { query: hotel_name })
+      raise StandardError, "429 rate limit" if resp.status == 429
+      resp
+    end
     return nil unless loc_response.success?
 
     locations = loc_response.body.dig("data") || []
@@ -144,10 +163,12 @@ class HotelAggregator
     hotel_id = hotel_match["dest_id"]
     booking_url = "https://www.booking.com/hotel/#{hotel_match['cc1']}/#{hotel_id}.html"
 
-    # Step 2: Get review scores
-    scores_response = conn.get("/api/v1/hotels/getHotelReviewScores", {
-      hotel_id: hotel_id
-    })
+    # Step 2: Get review scores (with retry)
+    scores_response = with_retry do
+      resp = conn.get("/api/v1/hotels/getHotelReviewScores", { hotel_id: hotel_id })
+      raise StandardError, "429 rate limit" if resp.status == 429
+      resp
+    end
     return nil unless scores_response.success?
 
     score_data = scores_response.body.dig("data") || []
