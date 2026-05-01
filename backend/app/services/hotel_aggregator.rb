@@ -49,7 +49,7 @@ class HotelAggregator
     return [] if merged.empty?
 
     # 5. Sort by combined rating descending, then price ascending
-    sorted = merged.sort_by { |h| [-(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY)] }
+    sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
 
     # 6. Cache (only if we got results)
     write_cache(cache_key, sorted) if sorted.any?
@@ -169,7 +169,7 @@ class HotelAggregator
       booking_data = lookup_booking(hotel[:name])
 
       source_ratings = []
-      sources = ["google"]
+      sources = [ "google" ]
 
       if hotel[:rating].present?
         source_ratings << {

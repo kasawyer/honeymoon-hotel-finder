@@ -364,14 +364,39 @@ RSpec.describe HotelAggregator do
         stub_tripadvisor([])
       end
 
-      it "returns an empty array" do
-        expect(aggregator.search).to eq([])
+      it "falls back to Google Places" do
+        google_service = instance_double(GooglePlacesService)
+        allow(GooglePlacesService).to receive(:new).and_return(google_service)
+        allow(google_service).to receive(:geocode).and_return({
+                                                                latitude: 48.86, longitude: 2.35,
+                                                                formatted_address: "Paris, France", place_id: "ChIJ_geo"
+                                                              })
+        allow(google_service).to receive(:search_hotels).and_return([ {
+                                                                       source: "google", external_id: "ChIJ_fallback", name: "Fallback Hotel",
+                                                                       address: "123 Fallback St", latitude: 48.86, longitude: 2.35,
+                                                                       rating: 4.2, total_ratings: 500, image_url: nil,
+                                                                       price_per_night: nil, price_level: nil, url: nil
+                                                                     } ])
+
+        stub_request(:get, /booking-com15\.p\.rapidapi\.com.*searchDestination/)
+          .to_return(
+            status: 200,
+            headers: { "Content-Type" => "application/json" },
+            body: { status: true, data: [] }.to_json
+          )
+
+        results = aggregator.search
+        expect(results.length).to eq(1)
+        expect(results.first[:name]).to eq("Fallback Hotel")
+        expect(results.first[:sources]).to include("google")
       end
 
-      it "does not call Google or Booking" do
-        aggregator.search
-        expect(WebMock).not_to have_requested(:post, /places.googleapis.com/)
-        expect(WebMock).not_to have_requested(:get, /booking-com15/)
+      it "returns empty array when Google fallback also fails" do
+        google_service = instance_double(GooglePlacesService)
+        allow(GooglePlacesService).to receive(:new).and_return(google_service)
+        allow(google_service).to receive(:geocode).and_return(nil)
+
+        expect(aggregator.search).to eq([])
       end
     end
 
