@@ -6,7 +6,7 @@ import axios from "axios";
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "",
   headers: { "Content-Type": "application/json" },
-  timeout: 30000, // 30s — API aggregation can be slow
+  timeout: 120000, // 120s — aggregation does 40+ sequential API calls
 });
 
 /**

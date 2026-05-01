@@ -35,19 +35,24 @@ class HotelAggregator
 
     # 2. TripAdvisor is the primary source
     ta_hotels = fetch_tripadvisor
-    return [] if ta_hotels.empty?
 
-    # Limit to MAX_HOTELS
-    ta_hotels = ta_hotels.first(MAX_HOTELS)
+    if ta_hotels.any?
+      # 3. Enrich with Google + Booking ratings
+      ta_hotels = ta_hotels.first(MAX_HOTELS)
+      merged = enrich_hotels(ta_hotels)
+    else
+      # 4. Fallback: use Google Places as the primary source
+      Rails.logger.info("[Aggregator] TripAdvisor returned no results, falling back to Google Places")
+      merged = fetch_google_fallback
+    end
 
-    # 3 & 4. Enrich each hotel with Google and Booking ratings in parallel
-    merged = enrich_hotels(ta_hotels)
+    return [] if merged.empty?
 
     # 5. Sort by combined rating descending, then price ascending
-    sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
+    sorted = merged.sort_by { |h| [-(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY)] }
 
-    # 6. Cache
-    write_cache(cache_key, sorted)
+    # 6. Cache (only if we got results)
+    write_cache(cache_key, sorted) if sorted.any?
 
     sorted
   end
@@ -94,13 +99,25 @@ class HotelAggregator
   # ── Enrich each hotel with Google + Booking data ────────────────────
 
   def enrich_hotels(ta_hotels)
-    ta_hotels.map do |ta_hotel|
-      google_data = lookup_google(ta_hotel[:name])
-      booking_data = lookup_booking(ta_hotel[:name])
-      build_merged_hotel(ta_hotel, google_data, booking_data)
-    rescue => e
-      Rails.logger.error("[Aggregator] Enrich failed for #{ta_hotel[:name]}: #{e.message}")
-      build_merged_hotel(ta_hotel, nil, nil)
+    # Process in batches of 3 to balance speed vs rate limits
+    ta_hotels.each_slice(3).flat_map do |batch|
+      threads = batch.map do |ta_hotel|
+        Thread.new do
+          google_data = lookup_google(ta_hotel[:name])
+          booking_data = lookup_booking(ta_hotel[:name])
+          build_merged_hotel(ta_hotel, google_data, booking_data)
+        rescue => e
+          Rails.logger.error("[Aggregator] Enrich failed for #{ta_hotel[:name]}: #{e.message}")
+          build_merged_hotel(ta_hotel, nil, nil)
+        end
+      end
+
+      results = threads.map { |t| t.join(15)&.value }
+      results.compact
+
+      # Small delay between batches to avoid rate limits
+      sleep(0.5)
+      results.compact
     end
   end
 
@@ -133,6 +150,66 @@ class HotelAggregator
   rescue => e
     Rails.logger.error("[Aggregator] Google lookup failed for #{hotel_name}: #{e.message}")
     nil
+  end
+
+  def fetch_google_fallback
+    service = GooglePlacesService.new
+    geo = service.geocode(@location)
+    return [] unless geo
+
+    google_hotels = service.search_hotels(
+      latitude: geo[:latitude],
+      longitude: geo[:longitude],
+      keywords: @keywords
+    ).first(MAX_HOTELS)
+
+    Rails.logger.info("[Aggregator] Google fallback returned #{google_hotels.length} results")
+
+    google_hotels.map do |hotel|
+      booking_data = lookup_booking(hotel[:name])
+
+      source_ratings = []
+      sources = ["google"]
+
+      if hotel[:rating].present?
+        source_ratings << {
+          source: "google",
+          rating: hotel[:rating].to_f.round(1),
+          count: hotel[:total_ratings] || 0
+        }
+      end
+
+      if booking_data&.dig(:rating).present?
+        sources << "booking"
+        source_ratings << {
+          source: "booking",
+          rating: booking_data[:rating].to_f.round(1),
+          count: booking_data[:count] || 0
+        }
+      end
+
+      combined_rating = compute_weighted_average(source_ratings)
+      total_reviews = source_ratings.sum { |sr| sr[:count] }
+
+      {
+        name: hotel[:name],
+        address: hotel[:address],
+        latitude: hotel[:latitude],
+        longitude: hotel[:longitude],
+        combined_rating: combined_rating,
+        total_reviews: total_reviews,
+        source_ratings: source_ratings,
+        sources: sources,
+        image_url: hotel[:image_url],
+        price_per_night: booking_data&.dig(:url) ? nil : nil, # Google doesn't have prices
+        url: booking_data&.dig(:url),
+        external_id: hotel[:external_id],
+        source: "google"
+      }
+    end
+  rescue => e
+    Rails.logger.error("[Aggregator] Google fallback failed: #{e.message}")
+    []
   end
 
   # ── Booking.com lookup (two-step: searchDestination → getHotelReviewScores) ──
