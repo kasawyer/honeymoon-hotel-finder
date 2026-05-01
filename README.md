@@ -35,5 +35,6 @@ npm run dev
 
 Visit http://localhost:5173
 
-[![Maintainability](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder/maintainability.svg)](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder)
+![CI](https://github.com/kasawyer/honeymoon-hotel-finder/actions/workflows/ci.yml/badge.svg?branch=master)
+[![Maintainability](https://api.codeclimate.com/v1/badges/YOUR_ID/maintainability)](https://codeclimate.com/github/kasawyer/honeymoon-hotel-finder/maintainability)
 [![codecov](https://codecov.io/gh/kasawyer/honeymoon-hotel-finder/branch/master/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/kasawyer/honeymoon-hotel-finder)
