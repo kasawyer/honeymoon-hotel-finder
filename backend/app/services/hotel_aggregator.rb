@@ -93,6 +93,7 @@ class HotelAggregator
     hotels
   rescue => e
     Rails.logger.error("[Aggregator] TripAdvisor failed: #{e.message}")
+    Sentry.capture_exception(e, extra: { location: @location }) if defined?(Sentry)
     []
   end
 
@@ -149,6 +150,7 @@ class HotelAggregator
     }
   rescue => e
     Rails.logger.error("[Aggregator] Google lookup failed for #{hotel_name}: #{e.message}")
+    Sentry.capture_exception(e, extra: { hotel_name: hotel_name, location: @location }) if defined?(Sentry)
     nil
   end
 
@@ -208,7 +210,8 @@ class HotelAggregator
       }
     end
   rescue => e
-    Rails.logger.error("[Aggregator] Google fallback failed: #{e.message}")
+    Rails.logger.error("[Aggregator] TripAdvisor failed: #{e.message}")
+    Sentry.capture_exception(e, extra: { location: @location }) if defined?(Sentry)
     []
   end
 
@@ -272,6 +275,7 @@ class HotelAggregator
     }
   rescue => e
     Rails.logger.error("[Aggregator] Booking lookup failed for #{hotel_name}: #{e.message}")
+    Sentry.capture_exception(e, extra: { hotel_name: hotel_name, location: @location }) if defined?(Sentry)
     nil
   end
 

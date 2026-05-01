@@ -76,3 +76,6 @@ gem "rubocop-rails", "~> 2.34", groups: [ :development, :test ]
 group :test do
   gem "simplecov", require: false
 end
+
+gem "sentry-ruby", "~> 6.5"
+gem "sentry-rails", "~> 6.5"

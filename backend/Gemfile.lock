@@ -332,6 +332,13 @@ GEM
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
+    sentry-rails (6.5.0)
+      railties (>= 5.2.0)
+      sentry-ruby (~> 6.5.0)
+    sentry-ruby (6.5.0)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      logger
     simplecov (0.22.0)
       docile (~> 1.1)
       simplecov-html (~> 0.11)
@@ -415,6 +422,8 @@ DEPENDENCIES
   rubocop (~> 1.86)
   rubocop-rails (~> 2.34)
   rubocop-rails-omakase
+  sentry-rails (~> 6.5)
+  sentry-ruby (~> 6.5)
   simplecov
   solid_cache
   solid_queue
