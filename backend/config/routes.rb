@@ -2,7 +2,11 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
-      resources :searches, only: [ :create ]
+      resources :searches, only: [ :create ] do
+        collection do
+          get :stream
+        end
+      end
       resources :locations, only: [ :index ]
     end
   end
