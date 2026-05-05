@@ -4,9 +4,8 @@ import { screen, waitFor } from "@testing-library/react";
 import { renderWithRouter } from "../../test/test-utils";
 import ResultsPage from "../ResultsPage";
 
-// Mock the API client
+// Mock the API client (still needed for SearchBar autocomplete)
 vi.mock("../../api/client", () => ({
-  searchHotels: vi.fn(),
   searchLocations: vi.fn().mockResolvedValue([]),
 }));
 
@@ -18,9 +17,7 @@ vi.mock("@react-google-maps/api", () => ({
   useLoadScript: () => ({ isLoaded: true, loadError: null }),
 }));
 
-import { searchHotels } from "../../api/client";
-
-// Mock useSearchParams to provide location
+// Mock useSearchParams
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return {
@@ -52,22 +49,77 @@ const mockHotels = [
   },
 ];
 
+// Helper to create a mock EventSource
+function createMockEventSource() {
+  const listeners = {};
+  const instance = {
+    addEventListener: vi.fn((event, callback) => {
+      listeners[event] = callback;
+    }),
+    close: vi.fn(),
+    readyState: 0,
+    onerror: null,
+    _emit(event, data) {
+      if (listeners[event]) {
+        listeners[event]({ data: JSON.stringify(data) });
+      }
+    },
+    _emitError() {
+      instance.readyState = 2;
+      if (instance.onerror) {
+        instance.onerror();
+      }
+    },
+  };
+  return instance;
+}
+
+let mockEventSource;
+
+let lastEventSourceUrl;
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockEventSource = createMockEventSource();
+  lastEventSourceUrl = null;
+  globalThis.EventSource = function (url) {
+    lastEventSourceUrl = url;
+    // Copy methods but use a proxy for onerror so it sticks
+    this.addEventListener = mockEventSource.addEventListener;
+    this.close = mockEventSource.close;
+    this.readyState = mockEventSource.readyState;
+    this._emit = mockEventSource._emit;
+    this._emitError = () => {
+      this.readyState = 2;
+      if (this.onerror) this.onerror();
+    };
+    // Update mockEventSource reference so tests can call _emit/_emitError
+    mockEventSource._emitError = this._emitError.bind(this);
+    mockEventSource.close = this.close;
+    return this;
+  };
+});
+
 describe("ResultsPage", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it("shows progress bar while searching", async () => {
+    renderWithRouter(<ResultsPage />);
+
+    // Simulate progress event
+    mockEventSource._emit("progress", {
+      stage: "tripadvisor",
+      message: "Searching TripAdvisor...",
+      percent: 10,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Searching TripAdvisor...")).toBeInTheDocument();
+    });
   });
 
-  it("shows loading state while searching", () => {
-    searchHotels.mockReturnValue(new Promise(() => {})); // Never resolves
-
+  it("displays hotel results after streaming completes", async () => {
     renderWithRouter(<ResultsPage />);
-    expect(screen.getByText(/Searching across all providers/i)).toBeInTheDocument();
-  });
 
-  it("displays hotel results after loading", async () => {
-    searchHotels.mockResolvedValue({ hotels: mockHotels });
-
-    renderWithRouter(<ResultsPage />);
+    mockEventSource._emit("complete", { hotels: mockHotels, count: 1, cached: false });
 
     await waitFor(() => {
       expect(screen.getByText("Le Bristol Paris")).toBeInTheDocument();
@@ -75,60 +127,59 @@ describe("ResultsPage", () => {
   });
 
   it("shows result count after loading", async () => {
-    searchHotels.mockResolvedValue({ hotels: mockHotels });
-
     renderWithRouter(<ResultsPage />);
+
+    mockEventSource._emit("complete", { hotels: mockHotels, count: 1, cached: false });
 
     await waitFor(() => {
       expect(screen.getByText(/1 hotel found/)).toBeInTheDocument();
     });
   });
 
-  it("shows error message on API failure", async () => {
-    searchHotels.mockRejectedValue(new Error("Network error"));
-
+  it("shows error message on SSE error event", async () => {
     renderWithRouter(<ResultsPage />);
 
+    mockEventSource._emit("error", { error: "Something went wrong." });
+
     await waitFor(() => {
-      expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
+      expect(screen.getByText("Something went wrong.")).toBeInTheDocument();
     });
   });
 
-  it("shows error message for 429 responses", async () => {
-    const error = new Error("Rate limited");
-    error.response = { status: 429 };
-    searchHotels.mockRejectedValue(error);
+  it("shows error on connection failure", async () => {
+    const { act } = await import("@testing-library/react");
 
     renderWithRouter(<ResultsPage />);
 
+    act(() => {
+      mockEventSource._emitError();
+    });
+
     await waitFor(() => {
-      expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
+      expect(screen.getByText("Connection lost. Please try again.")).toBeInTheDocument();
     });
   });
 
   it("shows retry button on error", async () => {
-    searchHotels.mockRejectedValue(new Error("fail"));
-
     renderWithRouter(<ResultsPage />);
 
+    mockEventSource._emit("error", { error: "fail" });
+
     await waitFor(() => {
-      // "Try again" appears in both the error message text and the retry button
       const retryButton = screen.getByRole("button", { name: /try again/i });
       expect(retryButton).toBeInTheDocument();
     });
   });
 
   it("renders the search bar with location prefilled", () => {
-    searchHotels.mockResolvedValue({ hotels: [] });
-
     renderWithRouter(<ResultsPage />);
     expect(screen.getByDisplayValue("Paris")).toBeInTheDocument();
   });
 
-  it("renders grid/map view toggle buttons", async () => {
-    searchHotels.mockResolvedValue({ hotels: mockHotels });
-
+  it("renders grid/map view toggle buttons after results load", async () => {
     renderWithRouter(<ResultsPage />);
+
+    mockEventSource._emit("complete", { hotels: mockHotels, count: 1, cached: false });
 
     await waitFor(() => {
       expect(screen.getByTitle("Grid view")).toBeInTheDocument();
@@ -137,12 +188,35 @@ describe("ResultsPage", () => {
   });
 
   it("shows empty state when no hotels found", async () => {
-    searchHotels.mockResolvedValue({ hotels: [] });
-
     renderWithRouter(<ResultsPage />);
+
+    mockEventSource._emit("complete", { hotels: [], count: 0, cached: false });
 
     await waitFor(() => {
       expect(screen.getByText("No hotels found")).toBeInTheDocument();
     });
+  });
+
+  it("shows keyword filters and Update Search button after results load", async () => {
+    renderWithRouter(<ResultsPage />);
+
+    mockEventSource._emit("complete", { hotels: mockHotels, count: 1, cached: false });
+
+    await waitFor(() => {
+      expect(screen.getByText("Keywords")).toBeInTheDocument();
+      expect(screen.getByText("Update Search")).toBeInTheDocument();
+    });
+  });
+
+  it("creates EventSource with correct URL", () => {
+    renderWithRouter(<ResultsPage />);
+
+    expect(lastEventSourceUrl).toContain("/api/v1/searches/stream?location=Paris");
+  });
+
+  it("closes EventSource on unmount", () => {
+    const { unmount } = renderWithRouter(<ResultsPage />);
+    unmount();
+    expect(mockEventSource.close).toHaveBeenCalled();
   });
 });

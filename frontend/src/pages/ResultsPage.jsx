@@ -36,11 +36,6 @@ export default function ResultsPage() {
     return () => cancel();
   }, [location]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [priceFilter, minRating, hotels]);
-
   // Filter hotels by price and rating
   const filteredHotels = useMemo(() => {
     return hotels.filter((hotel) => {
@@ -91,6 +86,12 @@ export default function ResultsPage() {
 
   const handlePriceFilterChange = useCallback((filter) => {
     setPriceFilter(filter);
+    setCurrentPage(1);
+  }, []);
+
+  const handleRatingChange = useCallback((val) => {
+    setMinRating(val);
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = (page) => {
@@ -114,7 +115,7 @@ export default function ResultsPage() {
   const filterSidebar = (
     <div className="space-y-4">
       <PriceFilter hotels={hotels} onFilterChange={handlePriceFilterChange} />
-      <RatingFilter value={minRating} onChange={setMinRating} hotels={hotels} />
+      <RatingFilter value={minRating} onChange={handleRatingChange} hotels={hotels} />
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <p className="text-sm font-semibold text-gray-700 mb-3">Keywords</p>
         <KeywordFilter selected={keywords} onChange={handleKeywordChange} />
