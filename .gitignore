@@ -19,3 +19,8 @@
 *.log
 backend/coverage/
 frontend/coverage/
+
+# Cyprus
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+frontend/cypress/downloads/
