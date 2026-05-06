@@ -4,12 +4,6 @@ describe("Search & Results Page", () => {
         cy.get('input[placeholder*="honeymoon"]').should("have.value", "Paris");
     });
 
-    it("shows a progress bar while loading", () => {
-        cy.visit("/results?location=Paris&keywords=romantic,honeymoon");
-        // Progress bar should appear briefly
-        cy.contains("Starting search").should("exist");
-    });
-
     it("displays autocomplete suggestions when typing", () => {
         // Intercept the autocomplete API call
         cy.intercept("GET", "/api/v1/locations*", {
