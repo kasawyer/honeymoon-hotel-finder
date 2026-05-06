@@ -1,17 +1,35 @@
-// src/hooks/useStreamingSearch.js
 import { useState, useCallback, useRef } from "react";
+import type { Hotel, StreamProgress } from "../types/hotel";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-export default function useStreamingSearch() {
-  const [hotels, setHotels] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [progress, setProgress] = useState(null);
-  const eventSourceRef = useRef(null);
+interface StreamingSearchResult {
+  hotels: Hotel[];
+  loading: boolean;
+  error: string | null;
+  progress: StreamProgress | null;
+  search: (params: { location: string; keywords: string[] }) => void;
+  cancel: () => void;
+}
 
-  const search = useCallback(({ location, keywords }) => {
-    // Close any existing connection
+interface CompleteEventData {
+  hotels: Hotel[];
+  count: number;
+  cached: boolean;
+}
+
+interface ErrorEventData {
+  error: string;
+}
+
+export default function useStreamingSearch(): StreamingSearchResult {
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<StreamProgress | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  const search = useCallback(({ location, keywords }: { location: string; keywords: string[] }) => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
@@ -30,22 +48,22 @@ export default function useStreamingSearch() {
     const eventSource = new EventSource(url);
     eventSourceRef.current = eventSource;
 
-    eventSource.addEventListener("progress", (event) => {
-      const data = JSON.parse(event.data);
+    eventSource.addEventListener("progress", (event: MessageEvent) => {
+      const data: StreamProgress = JSON.parse(event.data);
       setProgress(data);
     });
 
-    eventSource.addEventListener("complete", (event) => {
-      const data = JSON.parse(event.data);
+    eventSource.addEventListener("complete", (event: MessageEvent) => {
+      const data: CompleteEventData = JSON.parse(event.data);
       setHotels(data.hotels || []);
       setLoading(false);
       setProgress({ stage: "done", message: "Search complete!", percent: 100 });
       eventSource.close();
     });
 
-    eventSource.addEventListener("error", (event) => {
+    eventSource.addEventListener("error", (event: MessageEvent) => {
       try {
-        const data = JSON.parse(event.data);
+        const data: ErrorEventData = JSON.parse(event.data);
         setError(data.error || "Something went wrong.");
       } catch {
         setError("Connection lost. Please try again.");

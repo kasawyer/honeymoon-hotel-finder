@@ -14,7 +14,8 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test:e2e": "start-server-and-test dev http://localhost:5173 'cypress run'",
-    "test:e2e:open": "start-server-and-test dev http://localhost:5173 'cypress open'"
+    "test:e2e:open": "start-server-and-test dev http://localhost:5173 'cypress open'",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
@@ -35,6 +36,8 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.5",
     "cypress": "^15.14.2",
@@ -47,6 +50,7 @@
     "prettier": "^3.8.3",
     "start-server-and-test": "^3.0.2",
     "tailwindcss": "^4.2.2",
+    "typescript": "^6.0.3",
     "vite": "^8.0.1",
     "vitest": "^4.1.2"
   },
