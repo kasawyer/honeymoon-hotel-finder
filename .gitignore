@@ -24,3 +24,6 @@ frontend/coverage/
 frontend/cypress/screenshots/
 frontend/cypress/videos/
 frontend/cypress/downloads/
+
+# Docker
+.env

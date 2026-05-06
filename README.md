@@ -35,6 +35,32 @@ npm run dev
 
 Visit http://localhost:5173
 
+### Docker Setup (Alternative)
+
+Run the entire stack with one command:
+
+```sh
+# Copy and fill in your API keys
+cp .env.docker .env
+
+# Start everything (PostgreSQL, Rails, React)
+docker compose up
+
+# First run only — set up the database
+docker compose exec backend rails db:create db:migrate
+```
+
+Open http://localhost:5173
+
+```sh
+# Stop everything
+docker compose down
+
+# Reset database
+docker compose down -v
+docker compose up
+```
+
 ![CI](https://github.com/kasawyer/honeymoon-hotel-finder/actions/workflows/ci.yml/badge.svg?branch=master)
 [![Maintainability](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder/maintainability.svg)](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder)
 [![codecov](https://codecov.io/gh/kasawyer/honeymoon-hotel-finder/branch/master/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/kasawyer/honeymoon-hotel-finder)
