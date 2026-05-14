@@ -27,33 +27,35 @@ class HotelAggregator
   end
 
   def search
-    cache_key = build_cache_key
-
-    # 1. Check cache
-    cached = CachedSearch.find_valid(location: @location, query: cache_key)
-    return cached.results.map(&:deep_symbolize_keys) if cached
+    # 1. Check Redis cache
+    cached = HotelCache.get_search(location: @location, keywords: @keywords)
+    return cached if cached
 
     # 2. TripAdvisor is the primary source
     ta_hotels = fetch_tripadvisor
 
     if ta_hotels.any?
-      # 3. Enrich with Google + Booking ratings
       ta_hotels = ta_hotels.first(MAX_HOTELS)
       merged = enrich_hotels(ta_hotels)
     else
-      # 4. Fallback: use Google Places as the primary source
       Rails.logger.info("[Aggregator] TripAdvisor returned no results, falling back to Google Places")
       merged = fetch_google_fallback
     end
 
     return [] if merged.empty?
 
-    # 5. Sort by combined rating descending, then price ascending
+    # 3. Sort by combined rating descending, then price ascending
     sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
 
-    # 6. Cache (only if we got results)
-    write_cache(cache_key, sorted) if sorted.any?
-
+    # 4. Cache in Redis (only if we got results)
+    # 4. Cache in Redis (only if we got results)
+    if sorted.any?
+      begin
+        HotelCache.set_search(location: @location, keywords: @keywords, results: sorted)
+      rescue => e
+        Rails.logger.error("[Aggregator] Cache write failed: #{e.message}")
+      end
+    end
     sorted
   end
 
@@ -125,6 +127,10 @@ class HotelAggregator
   # ── Google lookup ───────────────────────────────────────────────────
 
   def lookup_google(hotel_name)
+    # Check hotel-level cache first
+    cached = HotelCache.get_google(hotel_name: hotel_name, location: @location)
+    return cached if cached
+
     conn = google_connection
     response = conn.post("/v1/places:searchText") do |req|
       req.headers["X-Goog-FieldMask"] = "places.id,places.displayName,places.rating,places.userRatingCount,places.formattedAddress,places.location,places.photos"
@@ -139,7 +145,7 @@ class HotelAggregator
     place = response.body.dig("places", 0)
     return nil unless place
 
-    {
+    result = {
       source: "google",
       rating: place["rating"],
       count: place["userRatingCount"] || 0,
@@ -148,6 +154,11 @@ class HotelAggregator
       longitude: place.dig("location", "longitude"),
       image_url: build_google_photo_url(place.dig("photos", 0, "name"))
     }
+
+    # Cache the result
+    HotelCache.set_google(hotel_name: hotel_name, location: @location, data: result)
+
+    result
   rescue => e
     Rails.logger.error("[Aggregator] Google lookup failed for #{hotel_name}: #{e.message}")
     Sentry.capture_exception(e, extra: { hotel_name: hotel_name, location: @location }) if defined?(Sentry)
@@ -218,9 +229,13 @@ class HotelAggregator
   # ── Booking.com lookup (two-step: searchDestination → getHotelReviewScores) ──
 
   def lookup_booking(hotel_name)
+    # Check hotel-level cache first
+    cached = HotelCache.get_booking(hotel_name: hotel_name, location: @location)
+    return cached if cached
+
     conn = booking_connection
 
-    # Step 1: Find the hotel's dest_id (with retry)
+    # Step 1: Find the hotel's dest_id
     loc_response = with_retry do
       resp = conn.get("/api/v1/hotels/searchDestination", { query: hotel_name })
       raise StandardError, "429 rate limit" if resp.status == 429
@@ -231,7 +246,6 @@ class HotelAggregator
     locations = loc_response.body.dig("data") || []
     locations = [ locations ] if locations.is_a?(Hash)
 
-    # Find the best match — prefer type "ho" (hotel) and matching city
     city_filter = @location.split(",").first.strip.downcase
     hotel_match = locations.find do |loc|
       loc["search_type"] == "hotel" &&
@@ -243,7 +257,7 @@ class HotelAggregator
     hotel_id = hotel_match["dest_id"]
     booking_url = "https://www.booking.com/hotel/#{hotel_match['cc1']}/#{hotel_id}.html"
 
-    # Step 2: Get review scores (with retry)
+    # Step 2: Get review scores
     scores_response = with_retry do
       resp = conn.get("/api/v1/hotels/getHotelReviewScores", { hotel_id: hotel_id })
       raise StandardError, "429 rate limit" if resp.status == 429
@@ -254,7 +268,6 @@ class HotelAggregator
     score_data = scores_response.body.dig("data") || []
     score_data = [ score_data ] if score_data.is_a?(Hash)
 
-    # Find the "total" customer_type entry for overall score
     breakdown = score_data.first&.dig("score_breakdown") || []
     total_entry = breakdown.find { |b| b["customer_type"] == "total" }
     return nil unless total_entry
@@ -262,17 +275,21 @@ class HotelAggregator
     review_score = total_entry["average_score"].to_f
     review_count = total_entry["count"].to_i
 
-    # Also try to get the booking URL from the searchDestination response
     url = hotel_match["url"] || booking_url
 
-    {
+    result = {
       source: "booking",
-      rating: (review_score / 2.0).round(1),  # Convert 0-10 → 0-5
+      rating: (review_score / 2.0).round(1),
       rating_raw: review_score,
       count: review_count,
       url: url,
       name: hotel_match["name"]
     }
+
+    # Cache the result
+    HotelCache.set_booking(hotel_name: hotel_name, location: @location, data: result)
+
+    result
   rescue => e
     Rails.logger.error("[Aggregator] Booking lookup failed for #{hotel_name}: #{e.message}")
     Sentry.capture_exception(e, extra: { hotel_name: hotel_name, location: @location }) if defined?(Sentry)
@@ -391,21 +408,5 @@ class HotelAggregator
   def build_google_photo_url(photo_name)
     return nil unless photo_name
     "https://places.googleapis.com/v1/#{photo_name}/media?maxWidthPx=400&key=#{ENV.fetch('GOOGLE_MAPS_API_KEY')}"
-  end
-
-  def write_cache(cache_key, results)
-    CachedSearch.upsert(
-      {
-        location: @location.downcase.strip,
-        query: cache_key,
-        results: results.map { |r| r.transform_keys(&:to_s) },
-        expires_at: 1.hour.from_now,
-        created_at: Time.current,
-        updated_at: Time.current
-      },
-      unique_by: [ :location, :query ]
-    )
-  rescue => e
-    Rails.logger.error("[Aggregator] Cache write failed: #{e.message}")
   end
 end

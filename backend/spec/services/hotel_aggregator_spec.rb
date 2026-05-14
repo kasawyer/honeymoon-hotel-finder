@@ -47,6 +47,7 @@ RSpec.describe HotelAggregator do
   before do
     allow(ENV).to receive(:fetch).with("GOOGLE_MAPS_API_KEY").and_return("test_google_key")
     allow(ENV).to receive(:fetch).with("RAPIDAPI_KEY").and_return("test_rapid_key")
+    Rails.cache.clear
   end
 
   # --- Stub helpers ---
@@ -245,9 +246,9 @@ RSpec.describe HotelAggregator do
 
       it "caches the results" do
         aggregator.search
-        cached = CachedSearch.find_valid(location: "Paris, France", query: "romantic")
+        cached = HotelCache.get_search(location: "Paris, France", keywords: [ "romantic" ])
         expect(cached).to be_present
-        expect(cached.results.length).to eq(1)
+        expect(cached.length).to eq(1)
       end
     end
 
@@ -431,20 +432,34 @@ RSpec.describe HotelAggregator do
     end
 
     context "caching" do
-      context "when cache has valid results" do
-        before do
-          CachedSearch.create!(
-            location: "paris, france",
-            query: "romantic",
-            results: [ { "name" => "Cached Hotel", "combined_rating" => 4.0, "sources" => [ "tripadvisor" ] } ],
-            expires_at: 30.minutes.from_now
-          )
+      context "caching" do
+        context "when cache has valid results" do
+          before do
+            HotelCache.set_search(
+              location: "Paris, France",
+              keywords: [ "romantic" ],
+              results: [ { name: "Cached Hotel", combined_rating: 4.0, sources: [ "tripadvisor" ] } ]
+            )
+          end
+
+          it "returns cached results without calling any APIs" do
+            expect(TripadvisorService).not_to receive(:new)
+            results = aggregator.search
+            expect(results.first[:name]).to eq("Cached Hotel")
+          end
         end
 
-        it "returns cached results without calling any APIs" do
-          expect(TripadvisorService).not_to receive(:new)
-          results = aggregator.search
-          expect(results.first[:name]).to eq("Cached Hotel")
+        context "when cache write fails" do
+          before do
+            stub_tripadvisor([ ta_hotel ])
+            stub_all_lookups_not_found
+            allow(Rails.cache).to receive(:write).and_raise(Redis::ConnectionError, "Connection refused")
+          end
+
+          it "still returns results" do
+            results = aggregator.search
+            expect(results.length).to eq(1)
+          end
         end
       end
 
