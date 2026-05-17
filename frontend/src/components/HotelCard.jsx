@@ -44,7 +44,7 @@ export default function HotelCard({ hotel }) {
         )}
 
         {/* Source badges — show all sources that found this hotel */}
-        <div className="absolute top-3 right-3 flex gap-1">
+        <div className="absolute top-3 right-3 flex flex-wrap gap-1 max-w-[60%] justify-end">
           {sources.map((src) => {
             const config = SOURCE_CONFIG[src] || { label: src, color: "#666" };
             return (

@@ -34,7 +34,7 @@ export default function ProgressBar({ progress }) {
       </div>
 
       {/* Status message */}
-      <p className="text-sm text-center" style={{ color: "var(--color-text-light)" }}>
+      <p className="text-xs sm:text-sm text-center" style={{ color: "var(--color-text-light)" }}>
         <span className="mr-1">{icon}</span>
         {progress.message}
       </p>

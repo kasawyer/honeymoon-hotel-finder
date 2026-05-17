@@ -83,11 +83,13 @@ export default function PriceFilter({ hotels, onFilterChange }) {
           max={priceMax}
           value={range[0]}
           onChange={handleMinChange}
-          className="absolute w-full top-0 h-6 appearance-none bg-transparent pointer-events-none
+          className="absolute w-full top-0 h-8 appearance-none bg-transparent pointer-events-none
                      [&::-webkit-slider-thumb]:pointer-events-auto
                      [&::-webkit-slider-thumb]:appearance-none
-                     [&::-webkit-slider-thumb]:w-5
-                     [&::-webkit-slider-thumb]:h-5
+                     [&::-webkit-slider-thumb]:w-6
+                     [&::-webkit-slider-thumb]:h-6
+                     [&::-webkit-slider-thumb]:sm:w-5
+                     [&::-webkit-slider-thumb]:sm:h-5
                      [&::-webkit-slider-thumb]:rounded-full
                      [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:border-2
@@ -98,8 +100,8 @@ export default function PriceFilter({ hotels, onFilterChange }) {
                      [&::-webkit-slider-thumb]:z-10
                      [&::-moz-range-thumb]:pointer-events-auto
                      [&::-moz-range-thumb]:appearance-none
-                     [&::-moz-range-thumb]:w-5
-                     [&::-moz-range-thumb]:h-5
+                     [&::-moz-range-thumb]:w-6
+                     [&::-moz-range-thumb]:h-6
                      [&::-moz-range-thumb]:rounded-full
                      [&::-moz-range-thumb]:bg-white
                      [&::-moz-range-thumb]:border-2
@@ -115,11 +117,13 @@ export default function PriceFilter({ hotels, onFilterChange }) {
           max={priceMax}
           value={range[1]}
           onChange={handleMaxChange}
-          className="absolute w-full top-0 h-6 appearance-none bg-transparent pointer-events-none
+          className="absolute w-full top-0 h-8 appearance-none bg-transparent pointer-events-none
                      [&::-webkit-slider-thumb]:pointer-events-auto
                      [&::-webkit-slider-thumb]:appearance-none
-                     [&::-webkit-slider-thumb]:w-5
-                     [&::-webkit-slider-thumb]:h-5
+                     [&::-webkit-slider-thumb]:w-6
+                     [&::-webkit-slider-thumb]:h-6
+                     [&::-webkit-slider-thumb]:sm:w-5
+                     [&::-webkit-slider-thumb]:sm:h-5
                      [&::-webkit-slider-thumb]:rounded-full
                      [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:border-2
@@ -130,8 +134,8 @@ export default function PriceFilter({ hotels, onFilterChange }) {
                      [&::-webkit-slider-thumb]:z-20
                      [&::-moz-range-thumb]:pointer-events-auto
                      [&::-moz-range-thumb]:appearance-none
-                     [&::-moz-range-thumb]:w-5
-                     [&::-moz-range-thumb]:h-5
+                     [&::-moz-range-thumb]:w-6
+                     [&::-moz-range-thumb]:h-6
                      [&::-moz-range-thumb]:rounded-full
                      [&::-moz-range-thumb]:bg-white
                      [&::-moz-range-thumb]:border-2

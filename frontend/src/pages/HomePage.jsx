@@ -58,21 +58,21 @@ export default function HomePage() {
       </div>
 
       {/* Popular destinations */}
-      <div className="mt-16 mb-20 w-full max-w-2xl">
+      <div className="mt-12 sm:mt-16 mb-16 sm:mb-20 w-full max-w-2xl px-2">
         <h2
           className="text-sm font-semibold text-center mb-4"
           style={{ color: "var(--color-text-muted)" }}
         >
           POPULAR HONEYMOON DESTINATIONS
         </h2>
-        <div className="flex flex-wrap justify-center gap-3">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-2 sm:gap-3">
           {POPULAR.map((dest) => (
             <button
               key={dest.name}
               onClick={() => handleSearch(dest.name)}
-              className="px-4 py-2 bg-white rounded-full text-sm text-gray-600
+              className="px-4 py-3 sm:py-2 bg-white rounded-full text-sm text-gray-600
                          border border-gray-100 hover:border-rose-300 hover:text-rose-700
-                         hover:shadow-md transition-all duration-200"
+                         hover:shadow-md transition-all duration-200 text-center"
             >
               {dest.emoji} {dest.name}
             </button>

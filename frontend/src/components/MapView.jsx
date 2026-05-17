@@ -58,7 +58,7 @@ export default function MapView({ hotels }) {
       <GoogleMap
         zoom={mappable.length > 0 ? 12 : 3}
         center={center}
-        mapContainerStyle={{ width: "100%", height: "500px" }}
+        mapContainerStyle={{ width: "100%", height: "min(500px, 60vh)" }}
         options={MAP_OPTIONS}
       >
         {mappable.map((hotel, i) => (

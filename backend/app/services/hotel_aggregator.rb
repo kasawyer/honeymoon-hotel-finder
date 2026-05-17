@@ -45,20 +45,10 @@ class HotelAggregator
     return [] if merged.empty?
 
     # 3. Sort by combined rating descending, then price ascending
-    sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
+    sorted = merged.sort_by { |h| [-(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY)] }
 
     # 4. Cache in Redis (only if we got results)
-    # 4. Cache in Redis (only if we got results)
-    if sorted.any?
-      begin
-        HotelCache.set_search(location: @location, keywords: @keywords, results: sorted)
-      rescue => e
-        Rails.logger.error("[Aggregator] Cache write failed: #{e.message}")
-      end
-    end
-
-    # Warm cache for related keyword sets in the background
-    warm_related_searches(sorted) if sorted.any?
+    HotelCache.set_search(location: @location, keywords: @keywords, results: sorted) if sorted.any?
 
     sorted
   end

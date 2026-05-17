@@ -175,7 +175,7 @@ export default function ResultsPage() {
           {!loading && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
               <div>
-                <h2 className="text-xl font-semibold text-gray-700">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-700">
                   {`${filteredHotels.length} hotel${filteredHotels.length !== 1 ? "s" : ""} found`}
                 </h2>
                 {filteredHotels.length > 0 && (

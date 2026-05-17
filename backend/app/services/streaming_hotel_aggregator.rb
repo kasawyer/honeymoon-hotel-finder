@@ -18,10 +18,45 @@ class StreamingHotelAggregator < HotelAggregator
       return
     end
 
-    # ... rest of the search method stays the same until the cache write ...
+    # 2. Search TripAdvisor
+    send_event("progress", { stage: "tripadvisor", message: "Searching TripAdvisor...", percent: 10 })
+    ta_hotels = fetch_tripadvisor
+
+    if ta_hotels.any?
+      ta_hotels = ta_hotels.first(MAX_HOTELS)
+      send_event("progress", {
+        stage: "tripadvisor_done",
+        message: "Found #{ta_hotels.length} hotels on TripAdvisor",
+        percent: 20
+      })
+
+      # 3. Enrich with Google + Booking
+      merged = enrich_hotels_with_progress(ta_hotels)
+    else
+      send_event("progress", {
+        stage: "tripadvisor_fallback",
+        message: "TripAdvisor unavailable, searching Google Places...",
+        percent: 15
+      })
+      merged = fetch_google_fallback_with_progress
+    end
+
+    if merged.empty?
+      send_event("complete", { hotels: [], count: 0, cached: false })
+      return
+    end
+
+    # 4. Sort
+    sorted = merged.sort_by { |h| [-(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY)] }
 
     # 5. Cache in Redis (only if we got results)
-    HotelCache.set_search(location: @location, keywords: @keywords, results: sorted) if sorted.any?
+    if sorted.any?
+      begin
+        HotelCache.set_search(location: @location, keywords: @keywords, results: sorted)
+      rescue => e
+        Rails.logger.error("[StreamingAggregator] Cache write failed: #{e.message}")
+      end
+    end
 
     send_event("progress", { stage: "done", message: "Search complete!", percent: 100 })
     send_event("complete", { hotels: sorted, count: sorted.length, cached: false })

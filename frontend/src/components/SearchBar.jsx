@@ -11,6 +11,7 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const debounceRef = useRef(null);
   const wrapperRef = useRef(null);
+  const isUserTypingRef = useRef(false);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -25,6 +26,7 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
 
   // Debounced autocomplete — 300ms after user stops typing
   useEffect(() => {
+    if (!isUserTypingRef.current) return;
     if (query.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -51,9 +53,11 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
   }, [query]);
 
   const selectSuggestion = (description) => {
+    isUserTypingRef.current = false;
     setQuery(description);
     setShowSuggestions(false);
     setSuggestions([]);
+    onSearch(description);
   };
 
   const handleSubmit = (e) => {
@@ -92,7 +96,10 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            isUserTypingRef.current = true;
+            setQuery(e.target.value);
+          }}
           onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
           placeholder="Where's the honeymoon? (e.g., Bali, Maldives, Santorini...)"
@@ -126,7 +133,7 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
               key={s.place_id}
               onClick={() => selectSuggestion(s.description)}
               onMouseEnter={() => setHighlightIndex(i)}
-              className={`px-5 py-3 cursor-pointer flex items-center gap-3
+              className={`px-5 py-4 sm:py-3 cursor-pointer flex items-center gap-3
                          border-b border-gray-50 last:border-0 transition-colors
                          ${i === highlightIndex ? "bg-rose-50" : "hover:bg-gray-50"}`}
             >
