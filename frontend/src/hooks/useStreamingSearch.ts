@@ -8,7 +8,13 @@ interface StreamingSearchResult {
   loading: boolean;
   error: string | null;
   progress: StreamProgress | null;
-  search: (params: { location: string; keywords: string[] }) => void;
+  providerErrors: string[];
+  search: (params: {
+    location: string;
+    keywords: string[];
+    checkIn?: string;
+    checkOut?: string;
+  }) => void;
   cancel: () => void;
 }
 
@@ -27,9 +33,11 @@ export default function useStreamingSearch(): StreamingSearchResult {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<StreamProgress | null>(null);
+  const [providerErrors, setProviderErrors] = useState<string[]>([]);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const search = useCallback(({ location, keywords }: { location: string; keywords: string[] }) => {
+    setProviderErrors([]);
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
@@ -54,8 +62,9 @@ export default function useStreamingSearch(): StreamingSearchResult {
     });
 
     eventSource.addEventListener("complete", (event: MessageEvent) => {
-      const data: CompleteEventData = JSON.parse(event.data);
+      const data = JSON.parse(event.data);
       setHotels(data.hotels || []);
+      setProviderErrors(data.provider_errors || []);
       setLoading(false);
       setProgress({ stage: "done", message: "Search complete!", percent: 100 });
       eventSource.close();
@@ -88,5 +97,5 @@ export default function useStreamingSearch(): StreamingSearchResult {
     }
   }, []);
 
-  return { hotels, loading, error, progress, search, cancel };
+  return { hotels, loading, error, progress, providerErrors, search, cancel };
 }

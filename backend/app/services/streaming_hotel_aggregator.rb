@@ -21,6 +21,7 @@ class StreamingHotelAggregator < HotelAggregator
     # 2. Search TripAdvisor
     send_event("progress", { stage: "tripadvisor", message: "Searching TripAdvisor...", percent: 10 })
     ta_hotels = fetch_tripadvisor
+    provider_errors = []
 
     if ta_hotels.any?
       ta_hotels = ta_hotels.first(MAX_HOTELS)
@@ -31,8 +32,10 @@ class StreamingHotelAggregator < HotelAggregator
       })
 
       # 3. Enrich with Google + Booking
-      merged = enrich_hotels_with_progress(ta_hotels)
+      merged, enrich_errors = enrich_hotels_with_progress(ta_hotels)
+      provider_errors.concat(enrich_errors)
     else
+      provider_errors << "TripAdvisor"
       send_event("progress", {
         stage: "tripadvisor_fallback",
         message: "TripAdvisor unavailable, searching Google Places...",
@@ -59,7 +62,12 @@ class StreamingHotelAggregator < HotelAggregator
     end
 
     send_event("progress", { stage: "done", message: "Search complete!", percent: 100 })
-    send_event("complete", { hotels: sorted, count: sorted.length, cached: false })
+    send_event("complete", {
+      hotels: sorted,
+      count: sorted.length,
+      cached: false,
+      provider_errors: provider_errors.uniq
+    })
   end
 
   private
@@ -67,13 +75,15 @@ class StreamingHotelAggregator < HotelAggregator
   def enrich_hotels_with_progress(ta_hotels)
     results = []
     total = ta_hotels.length
+    google_failures = 0
+    booking_failures = 0
 
     ta_hotels.each_slice(3).with_index do |batch, batch_index|
       completed = batch_index * 3
 
       send_event("progress", {
         stage: "enriching",
-        message: "Checking Google & Booking.com (#{[ completed, total ].min}/#{total})...",
+        message: "Checking Google & Booking.com (#{[completed, total].min}/#{total})...",
         percent: 20 + ((completed.to_f / total) * 70).round
       })
 
@@ -81,6 +91,8 @@ class StreamingHotelAggregator < HotelAggregator
         Thread.new do
           google_data = lookup_google(ta_hotel[:name])
           booking_data = lookup_booking(ta_hotel[:name])
+          google_failures += 1 unless google_data
+          booking_failures += 1 unless booking_data
           build_merged_hotel(ta_hotel, google_data, booking_data)
         rescue => e
           Rails.logger.error("[StreamingAggregator] Enrich failed for #{ta_hotel[:name]}: #{e.message}")
@@ -100,7 +112,11 @@ class StreamingHotelAggregator < HotelAggregator
       percent: 95
     })
 
-    results
+    errors = []
+    errors << "Google" if google_failures > total / 2
+    errors << "Booking.com" if booking_failures > total / 2
+
+    [results, errors]
   end
 
   def fetch_google_fallback_with_progress
