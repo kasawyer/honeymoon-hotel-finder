@@ -31,6 +31,10 @@ RSpec.configure do |config|
 
   # FactoryBot shorthand: create(:user) instead of FactoryBot.create(:user)
   config.include FactoryBot::Syntax::Methods
+
+  config.before(:each, type: :job) do
+    ActiveJob::Base.queue_adapter = :test
+  end
 end
 
 # Load support files

@@ -56,10 +56,24 @@ class HotelAggregator
         Rails.logger.error("[Aggregator] Cache write failed: #{e.message}")
       end
     end
+
+    # Warm cache for related keyword sets in the background
+    warm_related_searches(sorted) if sorted.any?
+
     sorted
   end
 
   private
+
+  def warm_related_searches(results)
+    # If someone searched "Paris" with ["romantic"], also warm ["romantic", "honeymoon", "anniversary"]
+    default_keywords = %w[romantic honeymoon anniversary]
+    return if @keywords.sort == default_keywords.sort
+
+    WarmDestinationCacheJob.perform_later(@location, default_keywords)
+  rescue => e
+    Rails.logger.error("[Aggregator] Failed to enqueue cache warming: #{e.message}")
+  end
 
   def with_retry(max_attempts: 3, base_delay: 2)
     attempts = 0

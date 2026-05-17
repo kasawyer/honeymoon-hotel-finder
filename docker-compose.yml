@@ -55,6 +55,26 @@ services:
         rails server -b 0.0.0.0 -p 3001
       "
 
+  sidekiq:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/honeymoon_hotel_finder_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      RAPIDAPI_KEY: ${RAPIDAPI_KEY}
+    volumes:
+      - ./backend:/app
+      - backend_bundle:/usr/local/bundle
+    command: bundle exec sidekiq -C config/sidekiq.yml
+
   frontend:
     build:
       context: ./frontend

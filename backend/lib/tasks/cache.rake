@@ -16,9 +16,18 @@ namespace :cache do
     puts "  Uptime: #{stats[:uptime_days]} days"
   end
 
-  desc "Purge expired CachedSearch records (legacy PostgreSQL)"
-  task purge_expired: :environment do
-    count = CachedSearch.expired.delete_all
-    puts "Purged #{count} expired cache entries from PostgreSQL"
+  desc "Warm cache for all popular destinations"
+  task warm: :environment do
+    puts "Enqueuing cache warming job..."
+    CacheWarmingJob.perform_later
+    puts "Cache warming job enqueued. Run 'bundle exec sidekiq' to process it."
+  end
+
+  desc "Warm cache for a single destination (e.g., rake cache:warm_one[Paris])"
+  task :warm_one, [ :destination ] => :environment do |_t, args|
+    destination = args[:destination] || "Paris, France"
+    puts "Warming cache for #{destination}..."
+    WarmDestinationCacheJob.perform_now(destination)
+    puts "Done."
   end
 end
