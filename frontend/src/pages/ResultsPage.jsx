@@ -243,7 +243,12 @@ export default function ResultsPage() {
             <>
               {viewMode === "grid" ? (
                 <>
-                  <HotelList hotels={paginatedHotels} loading={false} />
+                  <HotelList
+                    hotels={paginatedHotels}
+                    loading={false}
+                    location={location}
+                    onSearch={handleNewSearch}
+                  />
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
@@ -254,7 +259,12 @@ export default function ResultsPage() {
                 <>
                   <MapView hotels={paginatedHotels} />
                   <div className="mt-8">
-                    <HotelList hotels={paginatedHotels} loading={false} />
+                    <HotelList
+                      hotels={paginatedHotels}
+                      loading={false}
+                      location={location}
+                      onSearch={handleNewSearch}
+                    />
                     <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}

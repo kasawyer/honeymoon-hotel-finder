@@ -1,8 +1,7 @@
 // src/components/HotelList.jsx
 import HotelCard from "./HotelCard";
-import { SearchX } from "lucide-react";
+import NoResults from "./NoResults";
 
-// Skeleton loader while results are fetching
 function Skeleton() {
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse">
@@ -19,7 +18,7 @@ function Skeleton() {
   );
 }
 
-export default function HotelList({ hotels, loading }) {
+export default function HotelList({ hotels, loading, location, onSearch }) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -31,15 +30,7 @@ export default function HotelList({ hotels, loading }) {
   }
 
   if (!hotels || hotels.length === 0) {
-    return (
-      <div className="text-center py-20">
-        <SearchX className="w-16 h-16 mx-auto mb-4 text-gray-200" />
-        <p className="text-xl font-medium text-gray-400">No hotels found</p>
-        <p className="text-sm text-gray-300 mt-2">
-          Try a different location or adjust your keyword filters
-        </p>
-      </div>
-    );
+    return <NoResults location={location || "this area"} onSearch={onSearch} />;
   }
 
   return (
