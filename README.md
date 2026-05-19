@@ -10,6 +10,8 @@ and Expedia — filtered for romantic, honeymoon, and anniversary keywords.
 - **Hosting:** Heroku
 - **APIs:** Google Places, Booking.com (RapidAPI), TripAdvisor (RapidAPI), Hotels.com (RapidAPI)
 
+**[API Documentation](docs/api.md)** — Full endpoint reference with request/response examples
+
 ## Local Development
 
 ### Prerequisites
