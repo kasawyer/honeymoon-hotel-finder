@@ -12,6 +12,7 @@ import Pagination from "../components/Pagination";
 import ProgressBar from "../components/ProgressBar";
 import useStreamingSearch from "../hooks/useStreamingSearch";
 import ProviderNotice from "../components/ProviderNotice";
+import HotelDetail from "../components/HotelDetail";
 
 export default function ResultsPage() {
   const [searchParams] = useSearchParams();
@@ -29,6 +30,7 @@ export default function ResultsPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const HOTELS_PER_PAGE = 20;
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedHotel, setSelectedHotel] = useState(null);
 
   // Fetch hotels when URL params change
   useEffect(() => {
@@ -248,6 +250,7 @@ export default function ResultsPage() {
                     loading={false}
                     location={location}
                     onSearch={handleNewSearch}
+                    onSelectHotel={setSelectedHotel}
                   />
                   <Pagination
                     currentPage={currentPage}
@@ -264,6 +267,7 @@ export default function ResultsPage() {
                       loading={false}
                       location={location}
                       onSearch={handleNewSearch}
+                      onSelectHotel={setSelectedHotel}
                     />
                     <Pagination
                       currentPage={currentPage}
@@ -277,6 +281,10 @@ export default function ResultsPage() {
           )}
         </div>
       </div>
+      {/* Hotel detail slide-over */}
+      {selectedHotel && (
+        <HotelDetail hotel={selectedHotel} onClose={() => setSelectedHotel(null)} />
+      )}
     </div>
   );
 }

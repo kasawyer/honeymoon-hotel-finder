@@ -8,22 +8,15 @@ const SOURCE_CONFIG = {
   expedia: { label: "Expedia", color: "#FBAF17" },
 };
 
-export default function HotelCard({ hotel }) {
-  const handleCardClick = () => {
-    if (hotel.url) {
-      window.open(hotel.url, "_blank", "noopener,noreferrer");
-    }
-  };
-
+export default function HotelCard({ hotel, onSelect }) {
   const sources = hotel.sources || [hotel.source];
   const sourceRatings = hotel.source_ratings || [];
 
   return (
     <div
-      onClick={handleCardClick}
-      className={`bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl
-                  transition-all duration-300 border border-gray-50 group
-                  ${hotel.url ? "cursor-pointer" : ""}`}
+      onClick={() => onSelect && onSelect(hotel)}
+      className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl
+                  transition-all duration-300 border border-gray-50 group cursor-pointer"
     >
       {/* Image */}
       <div className="relative h-48 bg-gradient-to-br from-rose-50 to-amber-50 overflow-hidden">
@@ -43,7 +36,7 @@ export default function HotelCard({ hotel }) {
           </div>
         )}
 
-        {/* Source badges — show all sources that found this hotel */}
+        {/* Source badges */}
         <div className="absolute top-3 right-3 flex flex-wrap gap-1 max-w-[60%] justify-end">
           {sources.map((src) => {
             const config = SOURCE_CONFIG[src] || { label: src, color: "#666" };
@@ -99,7 +92,6 @@ export default function HotelCard({ hotel }) {
             )}
           </div>
 
-          {/* Price */}
           {hotel.price_per_night ? (
             <div className="text-right">
               <span className="text-xl font-bold" style={{ color: "var(--color-primary)" }}>
@@ -114,7 +106,7 @@ export default function HotelCard({ hotel }) {
 
         {/* Per-source rating breakdown */}
         {sourceRatings.length > 1 && (
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex flex-wrap gap-2">
             {sourceRatings.map((sr) => {
               const config = SOURCE_CONFIG[sr.source] || { label: sr.source, color: "#666" };
               return (
@@ -134,17 +126,6 @@ export default function HotelCard({ hotel }) {
               );
             })}
           </div>
-        )}
-
-        {/* External link */}
-        {hotel.url && (
-          <p
-            className="inline-flex items-center gap-1 text-sm font-medium
-                       hover:underline transition-colors"
-            style={{ color: "var(--color-primary)" }}
-          >
-            View details <ExternalLink className="w-3 h-3" />
-          </p>
         )}
       </div>
     </div>

@@ -18,7 +18,7 @@ function Skeleton() {
   );
 }
 
-export default function HotelList({ hotels, loading, location, onSearch }) {
+export default function HotelList({ hotels, loading, location, onSearch, onSelectHotel }) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -36,7 +36,11 @@ export default function HotelList({ hotels, loading, location, onSearch }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {hotels.map((hotel, i) => (
-        <HotelCard key={`${hotel.source}-${hotel.external_id}-${i}`} hotel={hotel} />
+        <HotelCard
+          key={`${hotel.source}-${hotel.external_id}-${i}`}
+          hotel={hotel}
+          onSelect={onSelectHotel}
+        />
       ))}
     </div>
   );

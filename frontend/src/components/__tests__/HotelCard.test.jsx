@@ -81,11 +81,6 @@ describe("HotelCard", () => {
       expect(ratings.length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText("4.9")).toBeInTheDocument();
     });
-
-    it("displays 'View details' link when URL exists", () => {
-      render(<HotelCard hotel={fullHotel} />);
-      expect(screen.getByText("View details")).toBeInTheDocument();
-    });
   });
 
   describe("minimal data", () => {
@@ -104,11 +99,6 @@ describe("HotelCard", () => {
       expect(screen.queryByText("per night")).not.toBeInTheDocument();
     });
 
-    it("does not display 'View details' when URL is null", () => {
-      render(<HotelCard hotel={minimalHotel} />);
-      expect(screen.queryByText("View details")).not.toBeInTheDocument();
-    });
-
     it("does not display per-source breakdown with only one source", () => {
       render(<HotelCard hotel={minimalHotel} />);
       // The breakdown pills only show when sourceRatings.length > 1
@@ -118,26 +108,22 @@ describe("HotelCard", () => {
   });
 
   describe("interactions", () => {
-    it("opens booking URL in new tab when card is clicked", async () => {
+    it("calls onSelect when card is clicked", async () => {
       const user = userEvent.setup();
-      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      const onSelect = vi.fn();
+
+      render(<HotelCard hotel={fullHotel} onSelect={onSelect} />);
+      await user.click(screen.getByText("Le Bristol Paris"));
+
+      expect(onSelect).toHaveBeenCalledWith(fullHotel);
+    });
+
+    it("does not crash when onSelect is not provided", async () => {
+      const user = userEvent.setup();
 
       render(<HotelCard hotel={fullHotel} />);
       await user.click(screen.getByText("Le Bristol Paris"));
-
-      expect(openSpy).toHaveBeenCalledWith(fullHotel.url, "_blank", "noopener,noreferrer");
-      openSpy.mockRestore();
-    });
-
-    it("does not open a window when hotel has no URL", async () => {
-      const user = userEvent.setup();
-      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
-
-      render(<HotelCard hotel={minimalHotel} />);
-      await user.click(screen.getByText("Budget Inn"));
-
-      expect(openSpy).not.toHaveBeenCalled();
-      openSpy.mockRestore();
+      // Should not throw
     });
   });
 
