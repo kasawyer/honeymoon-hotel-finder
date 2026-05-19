@@ -31,7 +31,24 @@ class HotelAggregator
     cached = HotelCache.get_search(location: @location, keywords: @keywords)
     return cached if cached
 
-    # 2. TripAdvisor is the primary source
+    # 2. Use lock to prevent duplicate simultaneous searches
+    results, source = SearchLock.with_lock(location: @location, keywords: @keywords) do
+      # Double-check cache inside the lock (another request may have just finished)
+      cached_inside_lock = HotelCache.get_search(location: @location, keywords: @keywords)
+      if cached_inside_lock
+        cached_inside_lock
+      else
+        run_search
+      end
+    end
+
+    results
+  end
+
+  private
+
+  def run_search
+    # TripAdvisor is the primary source
     ta_hotels = fetch_tripadvisor
 
     if ta_hotels.any?
@@ -44,16 +61,23 @@ class HotelAggregator
 
     return [] if merged.empty?
 
-    # 3. Sort by combined rating descending, then price ascending
-    sorted = merged.sort_by { |h| [-(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY)] }
+    # Sort by combined rating descending, then price ascending
+    sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
 
-    # 4. Cache in Redis (only if we got results)
-    HotelCache.set_search(location: @location, keywords: @keywords, results: sorted) if sorted.any?
+    # Cache in Redis (only if we got results)
+    if sorted.any?
+      begin
+        HotelCache.set_search(location: @location, keywords: @keywords, results: sorted)
+      rescue => e
+        Rails.logger.error("[Aggregator] Cache write failed: #{e.message}")
+      end
+    end
+
+    # Warm cache for related keyword sets in the background
+    warm_related_searches(sorted) if sorted.any?
 
     sorted
   end
-
-  private
 
   def warm_related_searches(results)
     # If someone searched "Paris" with ["romantic"], also warm ["romantic", "honeymoon", "anniversary"]

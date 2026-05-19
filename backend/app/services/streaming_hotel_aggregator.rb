@@ -18,6 +18,53 @@ class StreamingHotelAggregator < HotelAggregator
       return
     end
 
+    # 2. Try to acquire search lock
+    lock_key = "lock:search:#{@location.downcase.strip}:#{@keywords.map(&:downcase).sort.join(',')}"
+    acquired = REDIS.set(lock_key, "#{Process.pid}", nx: true, ex: 120)
+
+    if !acquired
+      # Another request is already searching — wait for cache
+      send_event("progress", { stage: "waiting", message: "Another search in progress, waiting for results...", percent: 5 })
+
+      cached = wait_for_cached_results
+      if cached
+        send_event("progress", { stage: "cache_hit", message: "Found results", percent: 100 })
+        send_event("complete", { hotels: cached, count: cached.length, cached: true })
+        return
+      end
+
+      # Timed out — proceed with our own search
+      REDIS.set(lock_key, "#{Process.pid}", ex: 120)
+    end
+
+    begin
+      run_streaming_search
+    ensure
+      REDIS.del(lock_key) rescue nil
+    end
+  end
+
+  private
+
+  def wait_for_cached_results
+    elapsed = 0
+    while elapsed < 90
+      sleep(1)
+      elapsed += 1
+
+      cached = HotelCache.get_search(location: @location, keywords: @keywords)
+      return cached if cached
+
+      send_event("progress", {
+        stage: "waiting",
+        message: "Waiting for search results (#{elapsed}s)...",
+        percent: [ 5 + elapsed, 50 ].min
+      })
+    end
+    nil
+  end
+
+  def run_streaming_search
     # 2. Search TripAdvisor
     send_event("progress", { stage: "tripadvisor", message: "Searching TripAdvisor...", percent: 10 })
     ta_hotels = fetch_tripadvisor
@@ -31,7 +78,6 @@ class StreamingHotelAggregator < HotelAggregator
         percent: 20
       })
 
-      # 3. Enrich with Google + Booking
       merged, enrich_errors = enrich_hotels_with_progress(ta_hotels)
       provider_errors.concat(enrich_errors)
     else
@@ -45,14 +91,14 @@ class StreamingHotelAggregator < HotelAggregator
     end
 
     if merged.empty?
-      send_event("complete", { hotels: [], count: 0, cached: false })
+      send_event("complete", { hotels: [], count: 0, cached: false, provider_errors: provider_errors })
       return
     end
 
-    # 4. Sort
-    sorted = merged.sort_by { |h| [-(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY)] }
+    # Sort
+    sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
 
-    # 5. Cache in Redis (only if we got results)
+    # Cache
     if sorted.any?
       begin
         HotelCache.set_search(location: @location, keywords: @keywords, results: sorted)
@@ -70,8 +116,6 @@ class StreamingHotelAggregator < HotelAggregator
     })
   end
 
-  private
-
   def enrich_hotels_with_progress(ta_hotels)
     results = []
     total = ta_hotels.length
@@ -83,7 +127,7 @@ class StreamingHotelAggregator < HotelAggregator
 
       send_event("progress", {
         stage: "enriching",
-        message: "Checking Google & Booking.com (#{[completed, total].min}/#{total})...",
+        message: "Checking Google & Booking.com (#{[ completed, total ].min}/#{total})...",
         percent: 20 + ((completed.to_f / total) * 70).round
       })
 
@@ -116,7 +160,7 @@ class StreamingHotelAggregator < HotelAggregator
     errors << "Google" if google_failures > total / 2
     errors << "Booking.com" if booking_failures > total / 2
 
-    [results, errors]
+    [ results, errors ]
   end
 
   def fetch_google_fallback_with_progress
