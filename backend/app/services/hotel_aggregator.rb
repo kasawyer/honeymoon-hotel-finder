@@ -113,12 +113,19 @@ class HotelAggregator
   # ── Primary source: TripAdvisor ─────────────────────────────────────
 
   def fetch_tripadvisor
+    unless ApiUsageTracker.available?(:tripadvisor)
+      Rails.logger.warn("[Aggregator] TripAdvisor API quota exhausted, skipping")
+      return []
+    end
+
     hotels = TripadvisorService.new.search_hotels(
       location: @location,
       check_in: @check_in,
       check_out: @check_out,
       keywords: @keywords
     )
+    # 2 API calls: searchLocation + searchHotels
+    ApiUsageTracker.record(:tripadvisor, count: 2)
     Rails.logger.info("[Aggregator] TripAdvisor returned #{hotels.length} results")
     hotels
   rescue => e
@@ -155,9 +162,13 @@ class HotelAggregator
   # ── Google lookup ───────────────────────────────────────────────────
 
   def lookup_google(hotel_name)
-    # Check hotel-level cache first
     cached = HotelCache.get_google(hotel_name: hotel_name, location: @location)
     return cached if cached
+
+    unless ApiUsageTracker.available?(:google)
+      Rails.logger.warn("[Aggregator] Google API quota exhausted, skipping #{hotel_name}")
+      return nil
+    end
 
     conn = google_connection
     response = conn.post("/v1/places:searchText") do |req|
@@ -167,6 +178,8 @@ class HotelAggregator
         maxResultCount: 1
       }.to_json
     end
+
+    ApiUsageTracker.record(:google)
 
     return nil unless response.success?
 
@@ -183,9 +196,7 @@ class HotelAggregator
       image_url: build_google_photo_url(place.dig("photos", 0, "name"))
     }
 
-    # Cache the result
     HotelCache.set_google(hotel_name: hotel_name, location: @location, data: result)
-
     result
   rescue => e
     Rails.logger.error("[Aggregator] Google lookup failed for #{hotel_name}: #{e.message}")
@@ -257,18 +268,22 @@ class HotelAggregator
   # ── Booking.com lookup (two-step: searchDestination → getHotelReviewScores) ──
 
   def lookup_booking(hotel_name)
-    # Check hotel-level cache first
     cached = HotelCache.get_booking(hotel_name: hotel_name, location: @location)
     return cached if cached
 
+    unless ApiUsageTracker.available?(:booking)
+      Rails.logger.warn("[Aggregator] Booking API quota exhausted, skipping #{hotel_name}")
+      return nil
+    end
+
     conn = booking_connection
 
-    # Step 1: Find the hotel's dest_id
     loc_response = with_retry do
       resp = conn.get("/api/v1/hotels/searchDestination", { query: hotel_name })
       raise StandardError, "429 rate limit" if resp.status == 429
       resp
     end
+    ApiUsageTracker.record(:booking)
     return nil unless loc_response.success?
 
     locations = loc_response.body.dig("data") || []
@@ -285,12 +300,12 @@ class HotelAggregator
     hotel_id = hotel_match["dest_id"]
     booking_url = "https://www.booking.com/hotel/#{hotel_match['cc1']}/#{hotel_id}.html"
 
-    # Step 2: Get review scores
     scores_response = with_retry do
       resp = conn.get("/api/v1/hotels/getHotelReviewScores", { hotel_id: hotel_id })
       raise StandardError, "429 rate limit" if resp.status == 429
       resp
     end
+    ApiUsageTracker.record(:booking)
     return nil unless scores_response.success?
 
     score_data = scores_response.body.dig("data") || []
@@ -314,9 +329,7 @@ class HotelAggregator
       name: hotel_match["name"]
     }
 
-    # Cache the result
     HotelCache.set_booking(hotel_name: hotel_name, location: @location, data: result)
-
     result
   rescue => e
     Rails.logger.error("[Aggregator] Booking lookup failed for #{hotel_name}: #{e.message}")

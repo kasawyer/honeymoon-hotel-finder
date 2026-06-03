@@ -21,7 +21,8 @@ export default function ResultsPage() {
   const location = searchParams.get("location") || "";
   const keywordsParam = searchParams.get("keywords") || "romantic,honeymoon,anniversary";
 
-  const { hotels, loading, error, progress, providerErrors, search, cancel } = useStreamingSearch();
+  const { hotels, loading, error, progress, providerErrors, degradedProviders, search, cancel } =
+    useStreamingSearch();
 
   const [keywords, setKeywords] = useState(keywordsParam.split(","));
   const [viewMode, setViewMode] = useState("grid");
@@ -224,7 +225,9 @@ export default function ResultsPage() {
 
           {/* Error state */}
           {/* Provider warnings */}
-          {!loading && <ProviderNotice providerErrors={providerErrors} />}
+          {!loading && (
+            <ProviderNotice providerErrors={providerErrors} degradedProviders={degradedProviders} />
+          )}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl mb-6 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />

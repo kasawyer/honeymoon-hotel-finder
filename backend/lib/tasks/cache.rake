@@ -30,4 +30,23 @@ namespace :cache do
     WarmDestinationCacheJob.perform_now(destination)
     puts "Done."
   end
+
+  desc "Show API usage for the current month"
+  task usage: :environment do
+    puts "API Usage (current month):"
+    puts "-" * 50
+    ApiUsageTracker.all_usage.each do |u|
+      bar_length = 30
+      filled = (u[:percentage] / 100.0 * bar_length).round
+      bar = "#" * filled + "." * (bar_length - filled)
+      status = if u[:exhausted]
+                 "EXHAUSTED"
+      elsif u[:warning]
+                 "WARNING"
+      else
+                 "OK"
+      end
+      puts "  #{u[:provider].ljust(12)} [#{bar}] #{u[:count]}/#{u[:limit]} (#{u[:percentage]}%) #{status}"
+    end
+  end
 end

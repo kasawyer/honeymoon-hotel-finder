@@ -112,7 +112,8 @@ class StreamingHotelAggregator < HotelAggregator
       hotels: sorted,
       count: sorted.length,
       cached: false,
-      provider_errors: provider_errors.uniq
+      provider_errors: provider_errors.uniq,
+      degraded_providers: ApiUsageTracker.degraded_providers
     })
   end
 

@@ -8,6 +8,7 @@ Rails.application.routes.draw do
         end
       end
       resources :locations, only: [ :index ]
+      resource :status, only: [ :show ], controller: "status"
     end
   end
 
