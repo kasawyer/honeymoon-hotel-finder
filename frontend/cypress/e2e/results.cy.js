@@ -23,16 +23,16 @@ describe("Results Page with Mocked SSE", () => {
         cy.visit("/results?location=Paris&keywords=romantic");
 
         // Clear and type new search
-        cy.get('input[placeholder*="honeymoon"]').clear().type("Bali");
+        cy.get('input[placeholder*="destination"]').clear().type("Bali");
         cy.wait("@autocomplete");
         cy.contains("Bali, Indonesia").click();
-        cy.get('input[placeholder*="honeymoon"]').type("{enter}");
+        cy.get('input[placeholder*="destination"]').type("{enter}");
 
         cy.url().should("include", "location=Bali");
     });
 
     it("prefills the search bar with the location from URL", () => {
         cy.visit("/results?location=Santorini&keywords=romantic");
-        cy.get('input[placeholder*="honeymoon"]').should("have.value", "Santorini");
+        cy.get('input[placeholder*="destination"]').should("have.value", "Santorini");
     });
 });

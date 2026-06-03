@@ -27,17 +27,17 @@ describe("HomePage", () => {
 
   it("renders the hero heading", () => {
     renderWithRouter(<HomePage />);
-    expect(screen.getByText(/Find Your Dream Honeymoon Hotel/i)).toBeInTheDocument();
+    expect(screen.getByText(/Your honeymoon hotel, reviewed by thousands/i)).toBeInTheDocument();
   });
 
   it("renders the subtitle", () => {
     renderWithRouter(<HomePage />);
-    expect(screen.getByText(/Search across Booking.com, TripAdvisor/i)).toBeInTheDocument();
+    expect(screen.getByText(/We aggregate reviews from Google/i)).toBeInTheDocument();
   });
 
   it("renders the search bar", () => {
     renderWithRouter(<HomePage />);
-    expect(screen.getByPlaceholderText(/where's the honeymoon/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search a destination/i)).toBeInTheDocument();
   });
 
   it("renders keyword filter buttons", () => {
@@ -70,7 +70,7 @@ describe("HomePage", () => {
     const user = userEvent.setup();
 
     renderWithRouter(<HomePage />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Bora Bora");
     await user.keyboard("{Enter}");
@@ -84,7 +84,7 @@ describe("HomePage", () => {
     renderWithRouter(<HomePage />);
 
     // Default keywords are romantic, honeymoon, anniversary
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
     await user.type(input, "Paris");
     await user.keyboard("{Enter}");
 

@@ -63,7 +63,7 @@ describe("HotelCard", () => {
     it("displays the price per night", () => {
       render(<HotelCard hotel={fullHotel} />);
       expect(screen.getByText("$1660")).toBeInTheDocument();
-      expect(screen.getByText("per night")).toBeInTheDocument();
+      expect(screen.getByText("/night")).toBeInTheDocument();
     });
 
     it("displays source badges for all providers", () => {
@@ -84,9 +84,10 @@ describe("HotelCard", () => {
   });
 
   describe("minimal data", () => {
-    it("displays 'No rating' when combined_rating is null", () => {
+    it("does not show rating badge when combined_rating is null", () => {
       render(<HotelCard hotel={minimalHotel} />);
-      expect(screen.getByText("No rating")).toBeInTheDocument();
+      // No star icon or rating number should appear
+      expect(screen.queryByText("4.7")).not.toBeInTheDocument();
     });
 
     it("does not display address when null", () => {
@@ -99,11 +100,9 @@ describe("HotelCard", () => {
       expect(screen.queryByText("per night")).not.toBeInTheDocument();
     });
 
-    it("does not display per-source breakdown with only one source", () => {
+    it("does not display source count badge with only one source", () => {
       render(<HotelCard hotel={minimalHotel} />);
-      // The breakdown pills only show when sourceRatings.length > 1
-      expect(screen.queryByText("TripAdvisor")).toBeInTheDocument(); // badge
-      expect(screen.queryByText("Google")).not.toBeInTheDocument();
+      expect(screen.queryByText(/sources/)).not.toBeInTheDocument();
     });
   });
 

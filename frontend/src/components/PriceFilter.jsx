@@ -50,11 +50,20 @@ export default function PriceFilter({ hotels, onFilterChange }) {
   const maxPercent = ((range[1] - priceMin) / (priceMax - priceMin)) * 100;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+    <div
+      style={{
+        background: "white",
+        borderRadius: "12px",
+        border: "1px solid var(--color-border-warm)",
+        padding: "1.25rem",
+      }}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <DollarSign className="w-4 h-4" style={{ color: "var(--color-primary)" }} />
-          <span className="text-sm font-semibold text-gray-700">Price per night</span>
+          <span className="text-sm font-medium" style={{ color: "var(--color-text-main)" }}>
+            Price per night
+          </span>
         </div>
         <div className="text-sm font-bold" style={{ color: "var(--color-primary)" }}>
           ${range[0]} — ${range[1]}

@@ -12,13 +12,23 @@ function RatingBar({ rating, maxRating = 5 }) {
   const percentage = (rating / maxRating) * 100;
   return (
     <div className="flex items-center gap-2 flex-1">
-      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div
+        className="flex-1 h-2 overflow-hidden"
+        style={{ backgroundColor: "var(--color-border-warm)", borderRadius: "100px" }}
+      >
         <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${percentage}%`, backgroundColor: "var(--color-primary)" }}
+          className="h-full transition-all duration-500"
+          style={{
+            width: `${percentage}%`,
+            backgroundColor: "var(--color-primary)",
+            borderRadius: "100px",
+          }}
         />
       </div>
-      <span className="text-sm font-semibold text-gray-700 w-8 text-right">
+      <span
+        className="text-sm font-medium w-8 text-right"
+        style={{ color: "var(--color-text-main)" }}
+      >
         {Number(rating).toFixed(1)}
       </span>
     </div>
@@ -55,8 +65,8 @@ export default function HotelDetail({ hotel, onClose }) {
 
       {/* Slide-over panel */}
       <div
-        className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-white shadow-2xl
-                      overflow-y-auto transform transition-transform duration-300"
+        className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] overflow-y-auto transform transition-transform duration-300"
+        style={{ backgroundColor: "var(--color-bg-warm)" }}
       >
         {/* Header with image */}
         <div className="relative">
@@ -73,14 +83,16 @@ export default function HotelDetail({ hotel, onClose }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
           ) : (
-            <div className="h-40 bg-gradient-to-br from-rose-50 to-amber-50" />
+            <div
+              className="h-40"
+              style={{ background: "linear-gradient(135deg, #EDE4DA 0%, #F5ECE3 100%)" }}
+            />
           )}
 
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/30 text-white
-                       hover:bg-black/50 transition-colors backdrop-blur-sm"
+            className="absolute top-4 right-4 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors backdrop-blur-sm"
           >
             <X className="w-5 h-5" />
           </button>
@@ -88,13 +100,15 @@ export default function HotelDetail({ hotel, onClose }) {
           {/* Hotel name overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-5">
             <h2
-              className={`text-xl sm:text-2xl font-bold ${hotel.image_url ? "text-white" : "text-gray-800"}`}
+              className={`font-editorial text-xl sm:text-2xl font-medium ${hotel.image_url ? "text-white" : ""}`}
+              style={!hotel.image_url ? { color: "var(--color-text-main)" } : {}}
             >
               {hotel.name}
             </h2>
             {hotel.address && (
               <p
-                className={`text-sm mt-1 flex items-center gap-1 ${hotel.image_url ? "text-white/80" : "text-gray-500"}`}
+                className={`text-sm mt-1 flex items-center gap-1 ${hotel.image_url ? "text-white/80" : ""}`}
+                style={!hotel.image_url ? { color: "var(--color-text-muted)" } : {}}
               >
                 <MapPin className="w-3 h-3 shrink-0" />
                 {hotel.address}
@@ -108,11 +122,11 @@ export default function HotelDetail({ hotel, onClose }) {
           {/* Combined rating hero */}
           {hotel.combined_rating && (
             <div
-              className="flex items-center gap-4 p-4 rounded-xl"
-              style={{ backgroundColor: "rgba(139, 34, 82, 0.05)" }}
+              className="flex items-center gap-4 p-4"
+              style={{ backgroundColor: "var(--color-primary-light)", borderRadius: "12px" }}
             >
               <div className="text-center">
-                <div className="text-3xl font-bold" style={{ color: "var(--color-primary)" }}>
+                <div className="text-3xl font-medium" style={{ color: "var(--color-primary)" }}>
                   {Number(hotel.combined_rating).toFixed(1)}
                 </div>
                 <div className="flex items-center gap-0.5 mt-1">
@@ -129,7 +143,9 @@ export default function HotelDetail({ hotel, onClose }) {
                 </div>
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-700">Combined Rating</p>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text-main)" }}>
+                  Combined Rating
+                </p>
                 <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   Based on {Number(hotel.total_reviews || 0).toLocaleString()} reviews across{" "}
                   {sources.length} platform{sources.length !== 1 ? "s" : ""}
@@ -141,7 +157,9 @@ export default function HotelDetail({ hotel, onClose }) {
           {/* Per-source ratings */}
           {sourceRatings.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Ratings by Platform</h3>
+              <h3 className="text-sm font-medium mb-3" style={{ color: "var(--color-text-main)" }}>
+                Ratings by Platform
+              </h3>
               <div className="space-y-3">
                 {sourceRatings.map((sr) => {
                   const config = SOURCE_CONFIG[sr.source] || { label: sr.source, color: "#666" };
@@ -152,7 +170,9 @@ export default function HotelDetail({ hotel, onClose }) {
                           className="w-2.5 h-2.5 rounded-full shrink-0"
                           style={{ backgroundColor: config.color }}
                         />
-                        <span className="text-sm text-gray-600">{config.label}</span>
+                        <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+                          {config.label}
+                        </span>
                       </div>
                       <RatingBar rating={sr.rating} />
                       <span
@@ -170,28 +190,41 @@ export default function HotelDetail({ hotel, onClose }) {
 
           {/* Price */}
           {hotel.price_per_night && (
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-              <span className="text-sm text-gray-600">Price from</span>
+            <div
+              className="flex items-center justify-between p-4"
+              style={{
+                backgroundColor: "white",
+                borderRadius: "12px",
+                border: "1px solid var(--color-border-warm)",
+              }}
+            >
+              <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+                Price from
+              </span>
               <div className="text-right">
-                <span className="text-2xl font-bold" style={{ color: "var(--color-primary)" }}>
+                <span className="text-2xl font-medium" style={{ color: "var(--color-primary)" }}>
                   ${Number(hotel.price_per_night).toFixed(0)}
                 </span>
-                <span className="text-sm text-gray-400 ml-1">/ night</span>
+                <span className="text-sm ml-1" style={{ color: "var(--color-text-muted)" }}>
+                  / night
+                </span>
               </div>
             </div>
           )}
 
           {/* Source badges */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Found on</h3>
+            <h3 className="text-sm font-medium mb-3" style={{ color: "var(--color-text-main)" }}>
+              Found on
+            </h3>
             <div className="flex flex-wrap gap-2">
               {sources.map((src) => {
                 const config = SOURCE_CONFIG[src] || { label: src, color: "#666" };
                 return (
                   <span
                     key={src}
-                    className="px-3 py-1.5 rounded-full text-xs font-bold text-white"
-                    style={{ backgroundColor: config.color }}
+                    className="px-3 py-1.5 text-xs font-medium text-white"
+                    style={{ backgroundColor: config.color, borderRadius: "100px" }}
                   >
                     {config.label}
                   </span>
@@ -203,12 +236,15 @@ export default function HotelDetail({ hotel, onClose }) {
           {/* Map preview */}
           {hotel.latitude && hotel.longitude && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Location</h3>
+              <h3 className="text-sm font-medium mb-3" style={{ color: "var(--color-text-main)" }}>
+                Location
+              </h3>
               <a
                 href={mapsSearchUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-xl overflow-hidden border border-gray-100 hover:shadow-md transition-shadow"
+                className="block overflow-hidden hover:opacity-90 transition-opacity"
+                style={{ borderRadius: "12px", border: "1px solid var(--color-border-warm)" }}
               >
                 <img
                   src={staticMapUrl}
@@ -229,9 +265,8 @@ export default function HotelDetail({ hotel, onClose }) {
                 href={hotel.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl
-                text-white font-medium transition-colors hover:brightness-110"
-                style={{ backgroundColor: "var(--color-primary)" }}
+                className="flex items-center justify-center gap-2 w-full py-3 text-white font-medium transition-colors hover:opacity-90"
+                style={{ backgroundColor: "var(--color-primary)", borderRadius: "9px" }}
               >
                 <Globe className="w-4 h-4" />
                 {"View on " + (SOURCE_CONFIG[hotel.source]?.label || "Provider")}
@@ -242,9 +277,13 @@ export default function HotelDetail({ hotel, onClose }) {
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.name)}&query_place_id=${hotel.external_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl
-                text-gray-700 font-medium border border-gray-200
-                hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-3 font-medium transition-colors hover:opacity-90"
+                style={{
+                  color: "var(--color-text-main)",
+                  borderRadius: "9px",
+                  border: "1px solid var(--color-border-warm)",
+                  backgroundColor: "white",
+                }}
               >
                 <MapPin className="w-4 h-4" />
                 Open in Google Maps

@@ -2,28 +2,22 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary: #8b2252;
-  --color-primary-light: #a83279;
-  --color-primary-dark: #6b1a3f;
-  --color-secondary: #c9a96e;
-  --color-background: #fff8f0;
-  --color-surface: #ffffff;
-  --color-text: #2d2d2d;
-  --color-text-light: #6b6b6b;
-  --color-text-muted: #9ca3af;
+  --color-primary: #6b2d4a;
+  --color-primary-light: #f8f0f4;
+  --color-primary-hover: #7d3556;
+  --color-bg-warm: #f8f5f0;
+  --color-bg-card: #ffffff;
+  --color-border-warm: #e8e2d9;
+  --color-border-warm-hover: #d5ccc1;
+  --color-text-main: #3d2b2b;
+  --color-text-light: #9b8a7a;
+  --color-text-muted: #a09585;
+  --color-text-faint: #c4b5a5;
 }
 
 body {
-  margin: 0;
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  -webkit-font-smoothing: antialiased;
+  background-color: var(--color-bg-warm);
+  color: var(--color-text-main);
 }
 
 /* Thin scrollbar for filter sidebar */
@@ -40,4 +34,14 @@ body {
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+/* Warm input focus */
+input:focus {
+  outline: none;
+}
+
+/* Serif headings */
+.font-editorial {
+  font-family: Georgia, "Times New Roman", serif;
 }

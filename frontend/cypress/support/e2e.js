@@ -2,8 +2,8 @@
 
 // Search for a location
 Cypress.Commands.add("searchLocation", (location) => {
-    cy.get('input[placeholder*="honeymoon"]').clear().type(location);
-    cy.get('input[placeholder*="honeymoon"]').type("{enter}");
+    cy.get('input[placeholder*="destination"]').clear().type(location);
+    cy.get('input[placeholder*="destination"]').type("{enter}");
 });
 
 // Wait for results to load (progress bar appears then disappears)

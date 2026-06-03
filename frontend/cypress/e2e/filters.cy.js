@@ -6,22 +6,22 @@ describe("Filter Interactions", () => {
         cy.visit("/results?location=Paris&keywords=romantic");
         // The Update Search button appears after results load
         // Since we may not have results, just verify the page loaded
-        cy.get('input[placeholder*="honeymoon"]').should("have.value", "Paris");
+        cy.get('input[placeholder*="destination"]').should("have.value", "Paris");
     });
 
     it("navigates between home and results", () => {
         cy.visit("/");
-        cy.contains("Find Your Dream Honeymoon Hotel").should("be.visible");
+        cy.contains("Your honeymoon hotel, reviewed by thousands").should("be.visible");
 
         // Search
-        cy.get('input[placeholder*="honeymoon"]').type("Santorini{enter}");
+        cy.get('input[placeholder*="destination"]').type("Santorini{enter}");
         cy.url().should("include", "/results");
         cy.url().should("include", "location=Santorini");
 
         // Go back home
         cy.contains("Honeymoon Hotel Finder").click();
         cy.url().should("eq", Cypress.config().baseUrl + "/");
-        cy.contains("Find Your Dream Honeymoon Hotel").should("be.visible");
+        cy.contains("Your honeymoon hotel, reviewed by thousands").should("be.visible");
     });
 
     it("maintains keyword selection when navigating", () => {
@@ -32,7 +32,7 @@ describe("Filter Interactions", () => {
         cy.contains("button", "Luxury").click();
 
         // Search
-        cy.get('input[placeholder*="honeymoon"]').type("Paris{enter}");
+        cy.get('input[placeholder*="destination"]').type("Paris{enter}");
 
         // URL should have luxury but not romantic
         cy.url().should("include", "luxury");

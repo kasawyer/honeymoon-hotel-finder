@@ -7,11 +7,11 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
   const [query, setQuery] = useState(initialValue);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const debounceRef = useRef(null);
   const wrapperRef = useRef(null);
   const isUserTypingRef = useRef(false);
+  const inputRef = useRef(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -27,15 +27,10 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
   // Debounced autocomplete — 300ms after user stops typing
   useEffect(() => {
     if (!isUserTypingRef.current) return;
-    if (query.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
+    if (query.length < 2) return;
 
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      setLoading(true);
       try {
         const results = await searchLocations(query);
         setSuggestions(results);
@@ -44,8 +39,6 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
       } catch (err) {
         console.error("Autocomplete error:", err);
         setSuggestions([]);
-      } finally {
-        setLoading(false);
       }
     }, 300);
 
@@ -89,56 +82,71 @@ export default function SearchBar({ onSearch, initialValue = "" }) {
   return (
     <form onSubmit={handleSubmit} ref={wrapperRef} className="relative w-full max-w-2xl">
       <div
-        className="flex items-center bg-white rounded-full shadow-lg border border-rose-100
-                      focus-within:ring-2 focus-within:ring-rose-300 transition-shadow"
+        className="flex items-center bg-white border transition-colors"
+        style={{
+          borderRadius: "12px",
+          borderColor: "var(--color-border-warm)",
+        }}
       >
-        <MapPin className="w-5 h-5 ml-5 shrink-0" style={{ color: "var(--color-text-muted)" }} />
+        <MapPin className="w-5 h-5 ml-4 shrink-0" style={{ color: "var(--color-text-faint)" }} />
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => {
             isUserTypingRef.current = true;
-            setQuery(e.target.value);
+            const val = e.target.value;
+            setQuery(val);
+            if (val.length < 2) {
+              setSuggestions([]);
+              setShowSuggestions(false);
+            }
           }}
-          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+          onFocus={() => {
+            if (suggestions.length > 0) setShowSuggestions(true);
+          }}
           onKeyDown={handleKeyDown}
-          placeholder="Where's the honeymoon? (e.g., Bali, Maldives, Santorini...)"
-          className="flex-1 px-4 py-4 text-lg outline-none bg-transparent placeholder-gray-300"
+          placeholder="Search a destination..."
+          className="flex-1 px-3 py-3.5 text-base outline-none bg-transparent"
+          style={{ color: "var(--color-text-main)" }}
           autoComplete="off"
         />
-        {loading && (
-          <Loader2
-            className="w-5 h-5 mr-2 animate-spin"
-            style={{ color: "var(--color-text-muted)" }}
-          />
-        )}
         <button
           type="submit"
-          className="px-6 py-4 text-white font-semibold rounded-r-full transition-colors
-                     hover:brightness-110 active:brightness-90"
-          style={{ backgroundColor: "var(--color-primary)" }}
+          className="px-5 py-2.5 text-white text-sm font-medium mr-1.5 transition-colors hover:opacity-90"
+          style={{
+            backgroundColor: "var(--color-primary)",
+            borderRadius: "9px",
+          }}
         >
-          <Search className="w-5 h-5" />
+          Search
         </button>
       </div>
 
       {/* Autocomplete dropdown */}
       {showSuggestions && suggestions.length > 0 && (
         <ul
-          className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-xl border
-                       border-gray-100 overflow-hidden max-h-64 overflow-y-auto"
+          className="absolute z-50 w-full mt-2 bg-white overflow-hidden max-h-64 overflow-y-auto"
+          style={{
+            borderRadius: "12px",
+            border: "1px solid var(--color-border-warm)",
+          }}
         >
           {suggestions.map((s, i) => (
             <li
               key={s.place_id}
               onClick={() => selectSuggestion(s.description)}
               onMouseEnter={() => setHighlightIndex(i)}
-              className={`px-5 py-4 sm:py-3 cursor-pointer flex items-center gap-3
-                         border-b border-gray-50 last:border-0 transition-colors
-                         ${i === highlightIndex ? "bg-rose-50" : "hover:bg-gray-50"}`}
+              className="px-5 py-4 sm:py-3 cursor-pointer flex items-center gap-3 transition-colors"
+              style={{
+                borderBottom: "0.5px solid var(--color-border-warm)",
+                backgroundColor: i === highlightIndex ? "var(--color-primary-light)" : "white",
+              }}
             >
-              <MapPin className="w-4 h-4 shrink-0" style={{ color: "var(--color-text-muted)" }} />
-              <span className="text-gray-700 text-sm">{s.description}</span>
+              <MapPin className="w-4 h-4 shrink-0" style={{ color: "var(--color-text-faint)" }} />
+              <span className="text-sm" style={{ color: "var(--color-text-main)" }}>
+                {s.description}
+              </span>
             </li>
           ))}
         </ul>

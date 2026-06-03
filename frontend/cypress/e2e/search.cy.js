@@ -1,7 +1,7 @@
 describe("Search & Results Page", () => {
     it("shows the search bar prefilled with location", () => {
         cy.visit("/results?location=Paris&keywords=romantic,honeymoon");
-        cy.get('input[placeholder*="honeymoon"]').should("have.value", "Paris");
+        cy.get('input[placeholder*="destination"]').should("have.value", "Paris");
     });
 
     it("displays autocomplete suggestions when typing", () => {
@@ -17,7 +17,7 @@ describe("Search & Results Page", () => {
         }).as("autocomplete");
 
         cy.visit("/");
-        cy.get('input[placeholder*="honeymoon"]').type("Paris");
+        cy.get('input[placeholder*="destination"]').type("Paris");
 
         cy.wait("@autocomplete");
         cy.contains("Paris, France").should("be.visible");
@@ -33,11 +33,11 @@ describe("Search & Results Page", () => {
         }).as("autocomplete");
 
         cy.visit("/");
-        cy.get('input[placeholder*="honeymoon"]').type("Paris");
+        cy.get('input[placeholder*="destination"]').type("Paris");
 
         cy.wait("@autocomplete");
         cy.contains("Paris, France").click();
 
-        cy.get('input[placeholder*="honeymoon"]').should("have.value", "Paris, France");
+        cy.get('input[placeholder*="destination"]').should("have.value", "Paris, France");
     });
 });

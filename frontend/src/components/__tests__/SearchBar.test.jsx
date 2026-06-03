@@ -18,7 +18,7 @@ describe("SearchBar", () => {
 
   it("renders the input with placeholder text", () => {
     render(<SearchBar onSearch={() => {}} />);
-    expect(screen.getByPlaceholderText(/where's the honeymoon/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search a destination/i)).toBeInTheDocument();
   });
 
   it("renders with initial value", () => {
@@ -31,7 +31,7 @@ describe("SearchBar", () => {
     const onSearch = vi.fn();
 
     render(<SearchBar onSearch={onSearch} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Bali");
     await user.keyboard("{Enter}");
@@ -57,7 +57,7 @@ describe("SearchBar", () => {
     ]);
 
     render(<SearchBar onSearch={() => {}} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Paris");
 
@@ -72,7 +72,7 @@ describe("SearchBar", () => {
     searchLocations.mockResolvedValue([{ place_id: "abc", description: "Paris, France" }]);
 
     render(<SearchBar onSearch={() => {}} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Paris");
 
@@ -90,7 +90,7 @@ describe("SearchBar", () => {
     searchLocations.mockResolvedValue([{ place_id: "abc", description: "Paris, France" }]);
 
     render(<SearchBar onSearch={() => {}} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Paris");
 
@@ -107,7 +107,7 @@ describe("SearchBar", () => {
     const user = userEvent.setup();
 
     render(<SearchBar onSearch={() => {}} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "P");
 
@@ -115,38 +115,6 @@ describe("SearchBar", () => {
     await new Promise((r) => setTimeout(r, 400));
 
     expect(searchLocations).not.toHaveBeenCalled();
-  });
-
-  it("shows loading spinner while fetching suggestions", async () => {
-    const user = userEvent.setup();
-    // Create a promise that doesn't resolve immediately
-    let resolveSearch;
-    searchLocations.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveSearch = resolve;
-        })
-    );
-
-    const { container } = render(<SearchBar onSearch={() => {}} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
-
-    await user.type(input, "Paris");
-
-    // Wait for the debounce to fire
-    await waitFor(() => {
-      expect(searchLocations).toHaveBeenCalled();
-    });
-
-    // Spinner should be visible while loading
-    const spinner = container.querySelector(".animate-spin");
-    expect(spinner).toBeInTheDocument();
-
-    // Resolve and spinner should disappear
-    resolveSearch([]);
-    await waitFor(() => {
-      expect(container.querySelector(".animate-spin")).not.toBeInTheDocument();
-    });
   });
 
   it("navigates suggestions with arrow keys", async () => {
@@ -157,7 +125,7 @@ describe("SearchBar", () => {
     ]);
 
     render(<SearchBar onSearch={() => {}} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Paris");
 
@@ -182,7 +150,7 @@ describe("SearchBar", () => {
     searchLocations.mockResolvedValue([{ place_id: "abc", description: "Paris, France" }]);
 
     render(<SearchBar onSearch={() => {}} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Paris");
 
@@ -205,7 +173,7 @@ describe("SearchBar", () => {
         <SearchBar onSearch={() => {}} />
       </div>
     );
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Paris");
 
@@ -223,7 +191,7 @@ describe("SearchBar", () => {
     searchLocations.mockRejectedValue(new Error("Network error"));
 
     render(<SearchBar onSearch={() => {}} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Paris");
 
@@ -240,7 +208,7 @@ describe("SearchBar", () => {
     const onSearch = vi.fn();
 
     render(<SearchBar onSearch={onSearch} />);
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "  Bali  ");
     await user.keyboard("{Enter}");
@@ -258,7 +226,7 @@ describe("SearchBar", () => {
         <SearchBar onSearch={() => {}} />
       </div>
     );
-    const input = screen.getByPlaceholderText(/where's the honeymoon/i);
+    const input = screen.getByPlaceholderText(/search a destination/i);
 
     await user.type(input, "Paris");
 

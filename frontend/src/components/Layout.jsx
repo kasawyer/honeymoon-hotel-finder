@@ -1,36 +1,34 @@
 // src/components/Layout.jsx
-import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--color-background)" }}>
-      {/* Navigation */}
-      <header className="bg-white shadow-sm border-b border-rose-100 sticky top-0 z-50">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--color-bg-warm)" }}>
+      {/* Header */}
+      <header style={{ borderBottom: "1px solid var(--color-border-warm)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-xl font-bold hover:opacity-80 transition-opacity"
-            style={{ color: "var(--color-primary)" }}
-          >
-            <Heart className="w-6 h-6 fill-current" />
-            <span className="hidden sm:inline">Honeymoon Hotel Finder</span>
-            <span className="sm:hidden">HHF</span>
+          <Link to="/" className="flex items-center gap-2 no-underline">
+            <Heart className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+            <span className="font-editorial text-lg" style={{ color: "var(--color-text-main)" }}>
+              Honeymoon Hotel Finder
+            </span>
           </Link>
+          <p className="hidden sm:block text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Reviews from Google, Booking.com & TripAdvisor
+          </p>
         </div>
       </header>
 
-      {/* Page content */}
-      <main>{children}</main>
+      {/* Main */}
+      <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 bg-white mt-16">
-        <div
-          className="max-w-7xl mx-auto px-4 py-6 text-center text-sm"
-          style={{ color: "var(--color-text-muted)" }}
-        >
-          Honeymoon Hotel Finder — Aggregating results from Google, Booking.com, TripAdvisor &
-          Expedia
+      <footer style={{ borderTop: "1px solid var(--color-border-warm)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center">
+          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Honeymoon Hotel Finder — Aggregating reviews from Google, Booking.com & TripAdvisor
+          </p>
         </div>
       </footer>
     </div>

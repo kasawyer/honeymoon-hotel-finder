@@ -22,7 +22,14 @@ export default function RatingFilter({ value, onChange, hotels }) {
   const hotelsWithoutRating = hotels.filter((h) => h.combined_rating == null).length;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+    <div
+      style={{
+        background: "white",
+        borderRadius: "12px",
+        border: "1px solid var(--color-border-warm)",
+        padding: "1.25rem",
+      }}
+    >
       <div className="flex items-center gap-2 mb-4">
         <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
         <span className="text-sm font-semibold text-gray-700">Minimum rating</span>
@@ -49,7 +56,11 @@ export default function RatingFilter({ value, onChange, hotels }) {
                       : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                 }
               `}
-              style={isActive && !isDisabled ? { backgroundColor: "var(--color-primary)" } : {}}
+              style={
+                isActive && !isDisabled
+                  ? { backgroundColor: "var(--color-primary)", borderRadius: "8px" }
+                  : { borderRadius: "8px" }
+              }
             >
               {opt.value === 0 ? (
                 "All"

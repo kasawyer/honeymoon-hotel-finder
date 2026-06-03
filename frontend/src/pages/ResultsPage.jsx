@@ -120,13 +120,22 @@ export default function ResultsPage() {
     <div className="space-y-4">
       <PriceFilter hotels={hotels} onFilterChange={handlePriceFilterChange} />
       <RatingFilter value={minRating} onChange={handleRatingChange} hotels={hotels} />
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <p className="text-sm font-semibold text-gray-700 mb-3">Keywords</p>
+      <div
+        style={{
+          background: "white",
+          borderRadius: "12px",
+          border: "1px solid var(--color-border-warm)",
+          padding: "1.25rem",
+        }}
+      >
+        <p className="text-sm font-medium mb-3" style={{ color: "var(--color-text-main)" }}>
+          Keywords
+        </p>
         <KeywordFilter selected={keywords} onChange={handleKeywordChange} />
         <button
           onClick={handleApplyKeywords}
-          className="mt-4 w-full py-2 rounded-full text-white text-sm font-medium hover:brightness-110 transition-all"
-          style={{ backgroundColor: "var(--color-primary)" }}
+          className="mt-4 w-full py-2 text-white text-sm font-medium transition-all hover:opacity-90"
+          style={{ backgroundColor: "var(--color-primary)", borderRadius: "9px" }}
         >
           Update Search
         </button>
@@ -137,8 +146,10 @@ export default function ResultsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Search header */}
-      <div className="flex flex-col items-center gap-4 mb-8">
-        <SearchBar onSearch={handleNewSearch} initialValue={location} />
+      <div className="flex justify-center mb-8">
+        <div className="w-full max-w-xl">
+          <SearchBar onSearch={handleNewSearch} initialValue={location} />
+        </div>
       </div>
 
       {/* Progress bar — shown while loading */}
@@ -153,7 +164,13 @@ export default function ResultsPage() {
         <div className="lg:hidden mb-4">
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-white rounded-xl border border-gray-200 text-sm font-medium text-gray-700"
+            className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium"
+            style={{
+              background: "white",
+              borderRadius: "12px",
+              border: "1px solid var(--color-border-warm)",
+              color: "var(--color-text-main)",
+            }}
           >
             <SlidersHorizontal className="w-4 h-4" />
             {showMobileFilters ? "Hide Filters" : "Show Filters"}
@@ -199,11 +216,14 @@ export default function ResultsPage() {
               <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-white shadow-sm text-rose-800"
-                      : "text-gray-400 hover:text-gray-600"
+                  className={`p-2 rounded-lg transition-colors ${
+                    viewMode === "grid" ? "bg-white shadow-sm" : "hover:bg-white/50"
                   }`}
+                  style={
+                    viewMode === "grid"
+                      ? { color: "var(--color-primary)" }
+                      : { color: "var(--color-text-muted)" }
+                  }
                   title="Grid view"
                 >
                   <LayoutGrid className="w-5 h-5" />

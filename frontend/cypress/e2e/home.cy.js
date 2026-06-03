@@ -4,11 +4,11 @@ describe("Home Page", () => {
     });
 
     it("displays the hero heading", () => {
-        cy.contains("Find Your Dream Honeymoon Hotel").should("be.visible");
+        cy.contains("Your honeymoon hotel, reviewed by thousands").should("be.visible");
     });
 
     it("displays the search bar with placeholder", () => {
-        cy.get('input[placeholder*="honeymoon"]').should("be.visible");
+        cy.get('input[placeholder*="destination"]').should("be.visible");
     });
 
     it("displays keyword filter buttons", () => {
@@ -31,7 +31,7 @@ describe("Home Page", () => {
     });
 
     it("navigates to results when searching", () => {
-        cy.get('input[placeholder*="honeymoon"]').type("Paris{enter}");
+        cy.get('input[placeholder*="destination"]').type("Paris{enter}");
         cy.url().should("include", "/results");
         cy.url().should("include", "location=Paris");
     });
@@ -44,7 +44,7 @@ describe("Home Page", () => {
 
     it("includes selected keywords in the URL", () => {
         // Default keywords are romantic, honeymoon, anniversary
-        cy.get('input[placeholder*="honeymoon"]').type("Bali{enter}");
+        cy.get('input[placeholder*="destination"]').type("Bali{enter}");
         cy.url().should("include", "keywords=");
     });
 
@@ -55,14 +55,14 @@ describe("Home Page", () => {
         cy.contains("button", "Romantic").click();
 
         // Search and verify URL
-        cy.get('input[placeholder*="honeymoon"]').type("Paris{enter}");
+        cy.get('input[placeholder*="destination"]').type("Paris{enter}");
         cy.url().should("include", "luxury");
         cy.url().should("not.include", "romantic");
     });
 
     it("navigates home when clicking the logo", () => {
         // First navigate away
-        cy.get('input[placeholder*="honeymoon"]').type("Paris{enter}");
+        cy.get('input[placeholder*="destination"]').type("Paris{enter}");
         cy.url().should("include", "/results");
 
         // Click logo to go home
