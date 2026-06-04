@@ -41,10 +41,7 @@ jobs:
       REDIS_URL: redis://localhost:6379/1
       GOOGLE_MAPS_API_KEY: test_key
       RAPIDAPI_KEY: test_key
-
-    defaults:
-      run:
-        working-directory: backend
+      BUNDLE_GEMFILE: ${{ github.workspace }}/Gemfile
 
     steps:
       - uses: actions/checkout@v4
@@ -53,14 +50,13 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
-          working-directory: backend
           bundler-cache: true
 
       - name: Set up database
-        run: bundle exec rails db:schema:load
+        run: cd backend && bundle exec rails db:schema:load
 
       - name: Run RSpec
-        run: bundle exec rspec
+        run: cd backend && bundle exec rspec
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -144,11 +140,9 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
-          working-directory: backend
           bundler-cache: true
 
       - name: RuboCop
-        working-directory: backend
         run: bundle exec rubocop
 
       - name: Set up Node
