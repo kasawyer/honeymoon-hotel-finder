@@ -1,6 +1,7 @@
 // src/components/HotelDetail.jsx
 import { X, Star, MapPin, Globe } from "lucide-react";
 import { useEffect } from "react";
+import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
 
 const SOURCE_CONFIG = {
   google: { label: "Google", color: "#4285F4" },
@@ -35,6 +36,69 @@ function RatingBar({ rating, maxRating = 5 }) {
   );
 }
 
+function HotelMiniMap({ latitude, longitude, name }) {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+  });
+
+  if (!isLoaded) {
+    return (
+      <div>
+        <h3 className="text-sm font-medium mb-3" style={{ color: "var(--color-text-main)" }}>
+          Location
+        </h3>
+        <div
+          className="flex items-center justify-center"
+          style={{
+            height: "200px",
+            backgroundColor: "white",
+            borderRadius: "12px",
+            border: "1px solid var(--color-border-warm)",
+          }}
+        >
+          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Loading map...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h3 className="text-sm font-medium mb-3" style={{ color: "var(--color-text-main)" }}>
+        Location
+      </h3>
+      <div
+        className="overflow-hidden"
+        style={{ borderRadius: "12px", border: "1px solid var(--color-border-warm)" }}
+      >
+        <GoogleMap
+          mapContainerStyle={{ width: "100%", height: "200px" }}
+          center={{ lat: latitude, lng: longitude }}
+          zoom={15}
+          options={{
+            disableDefaultUI: true,
+            zoomControl: true,
+            scrollwheel: false,
+          }}
+        >
+          <MarkerF position={{ lat: latitude, lng: longitude }} title={name} />
+        </GoogleMap>
+      </div>
+      <a
+        href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs block text-center mt-1"
+        style={{ color: "var(--color-text-muted)" }}
+      >
+        Open in Google Maps
+      </a>
+    </div>
+  );
+}
+
 export default function HotelDetail({ hotel, onClose }) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -55,8 +119,6 @@ export default function HotelDetail({ hotel, onClose }) {
 
   const sourceRatings = hotel.source_ratings || [];
   const sources = hotel.sources || [];
-  const mapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${hotel.latitude},${hotel.longitude}`;
-  const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${hotel.latitude},${hotel.longitude}&zoom=15&size=480x200&scale=2&markers=color:red%7C${hotel.latitude},${hotel.longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
 
   return (
     <>
@@ -234,28 +296,9 @@ export default function HotelDetail({ hotel, onClose }) {
           </div>
 
           {/* Map preview */}
+          {/* Mini map */}
           {hotel.latitude && hotel.longitude && (
-            <div>
-              <h3 className="text-sm font-medium mb-3" style={{ color: "var(--color-text-main)" }}>
-                Location
-              </h3>
-              <a
-                href={mapsSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block overflow-hidden hover:opacity-90 transition-opacity"
-                style={{ borderRadius: "12px", border: "1px solid var(--color-border-warm)" }}
-              >
-                <img
-                  src={staticMapUrl}
-                  alt={`Map showing ${hotel.name}`}
-                  className="w-full h-[150px] sm:h-[200px] object-cover"
-                />
-              </a>
-              <p className="text-xs text-center mt-1" style={{ color: "var(--color-text-muted)" }}>
-                Click to open in Google Maps
-              </p>
-            </div>
+            <HotelMiniMap latitude={hotel.latitude} longitude={hotel.longitude} name={hotel.name} />
           )}
 
           {/* Action buttons */}
@@ -270,23 +313,6 @@ export default function HotelDetail({ hotel, onClose }) {
               >
                 <Globe className="w-4 h-4" />
                 {"View on " + (SOURCE_CONFIG[hotel.source]?.label || "Provider")}
-              </a>
-            )}
-            {hotel.latitude && hotel.longitude && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.name)}&query_place_id=${hotel.external_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 font-medium transition-colors hover:opacity-90"
-                style={{
-                  color: "var(--color-text-main)",
-                  borderRadius: "9px",
-                  border: "1px solid var(--color-border-warm)",
-                  backgroundColor: "white",
-                }}
-              >
-                <MapPin className="w-4 h-4" />
-                Open in Google Maps
               </a>
             )}
           </div>
