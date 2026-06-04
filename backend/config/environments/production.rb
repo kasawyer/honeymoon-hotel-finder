@@ -44,7 +44,7 @@ Rails.application.configure do
   config.cache_store = :solid_cache_store
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
-  config.active_job.queue_adapter = :solid_queue
+  config.active_job.queue_adapter = :sidekiq
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
