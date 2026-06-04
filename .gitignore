@@ -27,3 +27,6 @@ frontend/cypress/downloads/
 
 # Docker
 .env.docker
+
+backend/public/assets/
+backend/public/index.html

@@ -74,4 +74,6 @@ Rails.application.configure do
     read_timeout: 1,
     write_timeout: 1
   }
+
+  config.public_file_server.enabled = true
 end

@@ -1,0 +1,11 @@
+{
+  "name": "honeymoon-hotel-finder",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm ci && npm run build",
+    "heroku-postbuild": "cd frontend && npm ci && npm run build && cp -r dist/* ../backend/public/"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
