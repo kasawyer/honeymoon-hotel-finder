@@ -21,8 +21,17 @@ export default function ResultsPage() {
   const location = searchParams.get("location") || "";
   const keywordsParam = searchParams.get("keywords") || "romantic,honeymoon,anniversary";
 
-  const { hotels, loading, error, progress, providerErrors, degradedProviders, search, cancel } =
-    useStreamingSearch();
+  const {
+    hotels,
+    loading,
+    expanding,
+    error,
+    progress,
+    providerErrors,
+    degradedProviders,
+    search,
+    cancel,
+  } = useStreamingSearch();
 
   const [keywords, setKeywords] = useState(keywordsParam.split(","));
   const [viewMode, setViewMode] = useState("grid");
@@ -32,6 +41,12 @@ export default function ResultsPage() {
   const HOTELS_PER_PAGE = 20;
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedHotel, setSelectedHotel] = useState(null);
+  const SOURCE_LABELS = {
+    google: "Google",
+    booking: "Booking.com",
+    tripadvisor: "TripAdvisor",
+    expedia: "Expedia",
+  };
 
   // Fetch hotels when URL params change
   useEffect(() => {
@@ -207,9 +222,21 @@ export default function ResultsPage() {
                       </span>
                     )}
                     {Object.entries(sourceCounts)
-                      .map(([src, count]) => `${count} from ${src}`)
+                      .map(([src, count]) => `${count} from ${SOURCE_LABELS[src]}`)
                       .join(" · ")}
                   </p>
+                )}
+                {/* Expanding indicator */}
+                {expanding && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div
+                      className="w-3 h-3 rounded-full animate-pulse"
+                      style={{ backgroundColor: "var(--color-primary)" }}
+                    />
+                    <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+                      Finding more hotels... ({hotels.length} so far)
+                    </p>
+                  </div>
                 )}
               </div>
 

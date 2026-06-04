@@ -65,27 +65,27 @@ class StreamingHotelAggregator < HotelAggregator
   end
 
   def run_streaming_search
-    # 2. Search TripAdvisor
-    send_event("progress", { stage: "tripadvisor", message: "Searching TripAdvisor...", percent: 10 })
-    ta_hotels = fetch_tripadvisor
+    # === PHASE 1: Fast initial results ===
+    send_event("progress", { stage: "tripadvisor", message: "Searching TripAdvisor...", percent: 5 })
+    ta_hotels_page1 = fetch_tripadvisor(page: 1)
     provider_errors = []
 
-    if ta_hotels.any?
-      ta_hotels = ta_hotels.first(MAX_HOTELS)
+    if ta_hotels_page1.any?
+      ta_hotels_phase1 = ta_hotels_page1.first(MAX_HOTELS_PHASE1)
       send_event("progress", {
         stage: "tripadvisor_done",
-        message: "Found #{ta_hotels.length} hotels on TripAdvisor",
-        percent: 20
+        message: "Found #{ta_hotels_phase1.length} hotels on TripAdvisor",
+        percent: 15
       })
 
-      merged, enrich_errors = enrich_hotels_with_progress(ta_hotels)
+      merged, enrich_errors = enrich_hotels_with_progress(ta_hotels_phase1, start_percent: 15, end_percent: 85)
       provider_errors.concat(enrich_errors)
     else
       provider_errors << "TripAdvisor"
       send_event("progress", {
         stage: "tripadvisor_fallback",
         message: "TripAdvisor unavailable, searching Google Places...",
-        percent: 15
+        percent: 10
       })
       merged = fetch_google_fallback_with_progress
     end
@@ -95,10 +95,10 @@ class StreamingHotelAggregator < HotelAggregator
       return
     end
 
-    # Sort
+    # Sort and send Phase 1 results
     sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
 
-    # Cache
+    # Cache Phase 1
     if sorted.any?
       begin
         HotelCache.set_search(location: @location, keywords: @keywords, results: sorted)
@@ -113,23 +113,98 @@ class StreamingHotelAggregator < HotelAggregator
       count: sorted.length,
       cached: false,
       provider_errors: provider_errors.uniq,
-      degraded_providers: ApiUsageTracker.degraded_providers
+      degraded_providers: ApiUsageTracker.degraded_providers,
+      has_more: ta_hotels_page1.any?
     })
+
+    # === PHASE 2: Background expansion ===
+    if ta_hotels_page1.any?
+      expand_results(sorted, provider_errors)
+    end
   end
 
-  def enrich_hotels_with_progress(ta_hotels)
+  def expand_results(phase1_results, provider_errors)
+    send_event("progress", { stage: "expanding", message: "Finding more hotels...", percent: 0 })
+
+    existing_names = phase1_results.map { |h| h[:name].downcase }
+    all_additional = []
+
+    [ 2, 3 ].each do |page|
+      begin
+        ta_hotels = fetch_tripadvisor(page: page)
+        break if ta_hotels.empty?
+
+        # Deduplicate against Phase 1
+        new_hotels = ta_hotels.reject { |h| existing_names.include?(h[:name].downcase) }
+        break if new_hotels.empty?
+
+        send_event("progress", {
+          stage: "expanding",
+          message: "Enriching page #{page} hotels (#{new_hotels.length} new)...",
+          percent: (page - 1) * 50
+        })
+
+        enriched, _ = enrich_hotels_with_progress(
+          new_hotels.first(MAX_HOTELS_PHASE1),
+          start_percent: 0,
+          end_percent: 100,
+          event_type: "expand_progress"
+        )
+
+        if enriched.any?
+          sorted_new = enriched.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
+          all_additional.concat(sorted_new)
+          existing_names.concat(sorted_new.map { |h| h[:name].downcase })
+
+          send_event("more_results", {
+            hotels: sorted_new,
+            count: sorted_new.length,
+            total_count: phase1_results.length + all_additional.length
+          })
+        end
+
+        sleep(1) # Pause between pages
+      rescue => e
+        Rails.logger.error("[StreamingAggregator] Expand page #{page} failed: #{e.message}")
+        break
+      end
+    end
+
+    # Update cache with full results
+    if all_additional.any?
+      full_results = phase1_results + all_additional
+      full_sorted = full_results.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
+      begin
+        HotelCache.set_search(location: @location, keywords: @keywords, results: full_sorted)
+        Rails.logger.info("[StreamingAggregator] Updated cache with #{full_sorted.length} total hotels")
+      rescue => e
+        Rails.logger.error("[StreamingAggregator] Cache update failed: #{e.message}")
+      end
+    end
+
+    send_event("expansion_complete", {
+      additional_count: all_additional.length,
+      total_count: phase1_results.length + all_additional.length
+    })
+  rescue => e
+    Rails.logger.error("[StreamingAggregator] Expansion failed: #{e.message}")
+  end
+
+  def enrich_hotels_with_progress(ta_hotels, start_percent: 20, end_percent: 95, event_type: "progress")
     results = []
     total = ta_hotels.length
     google_failures = 0
     booking_failures = 0
+    percent_range = end_percent - start_percent
 
     ta_hotels.each_slice(3).with_index do |batch, batch_index|
       completed = batch_index * 3
+      current_percent = start_percent + ((completed.to_f / total) * percent_range).round
 
-      send_event("progress", {
+      send_event(event_type, {
         stage: "enriching",
         message: "Checking Google & Booking.com (#{[ completed, total ].min}/#{total})...",
-        percent: 20 + ((completed.to_f / total) * 70).round
+        percent: current_percent
       })
 
       threads = batch.map do |ta_hotel|
@@ -151,15 +226,9 @@ class StreamingHotelAggregator < HotelAggregator
       sleep(0.5)
     end
 
-    send_event("progress", {
-      stage: "enriching_done",
-      message: "All #{total} hotels enriched with ratings",
-      percent: 95
-    })
-
     errors = []
-    errors << "Google" if google_failures > total / 2
-    errors << "Booking.com" if booking_failures > total / 2
+    errors << "Google" if total > 0 && google_failures > total / 2
+    errors << "Booking.com" if total > 0 && booking_failures > total / 2
 
     [ results, errors ]
   end

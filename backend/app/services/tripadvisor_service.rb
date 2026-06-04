@@ -6,7 +6,7 @@
 class TripadvisorService < ApiClient
   HOST = "tripadvisor16.p.rapidapi.com"
 
-  def search_hotels(location:, check_in:, check_out:, keywords: [])
+  def search_hotels(location:, check_in:, check_out:, keywords: [], page: 1)
     conn = rapidapi_connection(HOST)
 
     # Step 1: Resolve location to TripAdvisor's geoId (with retry)
@@ -21,7 +21,8 @@ class TripadvisorService < ApiClient
         checkOut: check_out,
         adults: 2,
         rooms: 1,
-        currencyCode: "USD"
+        currencyCode: "USD",
+        page: page
       })
     end
     data = handle_response(response, source: "TripAdvisor")

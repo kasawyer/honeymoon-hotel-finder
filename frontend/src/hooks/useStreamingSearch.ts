@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 interface StreamingSearchResult {
   hotels: Hotel[];
   loading: boolean;
+  expanding: boolean;
   error: string | null;
   progress: StreamProgress | null;
   providerErrors: string[];
@@ -25,6 +26,18 @@ interface CompleteEventData {
   cached: boolean;
   provider_errors?: string[];
   degraded_providers?: string[];
+  has_more?: boolean;
+}
+
+interface MoreResultsEventData {
+  hotels: Hotel[];
+  count: number;
+  total_count: number;
+}
+
+interface ExpansionCompleteData {
+  additional_count: number;
+  total_count: number;
 }
 
 interface ErrorEventData {
@@ -34,6 +47,7 @@ interface ErrorEventData {
 export default function useStreamingSearch(): StreamingSearchResult {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [expanding, setExpanding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<StreamProgress | null>(null);
   const [providerErrors, setProviderErrors] = useState<string[]>([]);
@@ -57,6 +71,7 @@ export default function useStreamingSearch(): StreamingSearchResult {
       }
 
       setLoading(true);
+      setExpanding(false);
       setError(null);
       setHotels([]);
       setProviderErrors([]);
@@ -86,7 +101,34 @@ export default function useStreamingSearch(): StreamingSearchResult {
         setDegradedProviders(data.degraded_providers || []);
         setLoading(false);
         setProgress({ stage: "done", message: "Search complete!", percent: 100 });
+
+        // If there are more results coming, show expanding state
+        if (data.has_more) {
+          setExpanding(true);
+        } else {
+          eventSource.close();
+        }
+      });
+
+      eventSource.addEventListener("more_results", (event: MessageEvent) => {
+        const data: MoreResultsEventData = JSON.parse(event.data);
+        setHotels((prev) => {
+          // Deduplicate by name
+          const existingNames = new Set(prev.map((h) => h.name.toLowerCase()));
+          const newHotels = data.hotels.filter((h) => !existingNames.has(h.name.toLowerCase()));
+          const combined = [...prev, ...newHotels];
+          // Re-sort by combined rating
+          return combined.sort((a, b) => (b.combined_rating || 0) - (a.combined_rating || 0));
+        });
+      });
+
+      eventSource.addEventListener("expansion_complete", (event: MessageEvent) => {
+        setExpanding(false);
         eventSource.close();
+      });
+
+      eventSource.addEventListener("expand_progress", (event: MessageEvent) => {
+        // Optional: could show a secondary progress indicator
       });
 
       eventSource.addEventListener("error", (event: MessageEvent) => {
@@ -97,6 +139,7 @@ export default function useStreamingSearch(): StreamingSearchResult {
           setError("Connection lost. Please try again.");
         }
         setLoading(false);
+        setExpanding(false);
         eventSource.close();
       });
 
@@ -104,6 +147,7 @@ export default function useStreamingSearch(): StreamingSearchResult {
         if (eventSource.readyState === EventSource.CLOSED) return;
         setError("Connection lost. Please try again.");
         setLoading(false);
+        setExpanding(false);
         eventSource.close();
       };
     },
@@ -114,6 +158,7 @@ export default function useStreamingSearch(): StreamingSearchResult {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       setLoading(false);
+      setExpanding(false);
       setProgress(null);
     }
   }, []);
@@ -121,6 +166,7 @@ export default function useStreamingSearch(): StreamingSearchResult {
   return {
     hotels,
     loading,
+    expanding,
     error,
     progress,
     providerErrors,

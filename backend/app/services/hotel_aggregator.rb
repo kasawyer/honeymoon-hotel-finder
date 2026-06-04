@@ -18,6 +18,8 @@
 class HotelAggregator
   DEFAULT_KEYWORDS = %w[romantic honeymoon anniversary].freeze
   MAX_HOTELS = 20
+  MAX_HOTELS_PHASE1 = 20
+  MAX_HOTELS_TOTAL = 60
 
   def initialize(location:, check_in: nil, check_out: nil, keywords: nil)
     @location = location
@@ -48,11 +50,10 @@ class HotelAggregator
   private
 
   def run_search
-    # TripAdvisor is the primary source
     ta_hotels = fetch_tripadvisor
 
     if ta_hotels.any?
-      ta_hotels = ta_hotels.first(MAX_HOTELS)
+      ta_hotels = ta_hotels.first(MAX_HOTELS_PHASE1)
       merged = enrich_hotels(ta_hotels)
     else
       Rails.logger.info("[Aggregator] TripAdvisor returned no results, falling back to Google Places")
@@ -61,10 +62,8 @@ class HotelAggregator
 
     return [] if merged.empty?
 
-    # Sort by combined rating descending, then price ascending
     sorted = merged.sort_by { |h| [ -(h[:combined_rating] || 0), (h[:price_per_night] || Float::INFINITY) ] }
 
-    # Cache in Redis (only if we got results)
     if sorted.any?
       begin
         HotelCache.set_search(location: @location, keywords: @keywords, results: sorted)
@@ -73,7 +72,6 @@ class HotelAggregator
       end
     end
 
-    # Warm cache for related keyword sets in the background
     warm_related_searches(sorted) if sorted.any?
 
     sorted
@@ -112,7 +110,7 @@ class HotelAggregator
 
   # ── Primary source: TripAdvisor ─────────────────────────────────────
 
-  def fetch_tripadvisor
+  def fetch_tripadvisor(page: 1)
     unless ApiUsageTracker.available?(:tripadvisor)
       Rails.logger.warn("[Aggregator] TripAdvisor API quota exhausted, skipping")
       return []
@@ -122,11 +120,11 @@ class HotelAggregator
       location: @location,
       check_in: @check_in,
       check_out: @check_out,
-      keywords: @keywords
+      keywords: @keywords,
+      page: page
     )
-    # 2 API calls: searchLocation + searchHotels
     ApiUsageTracker.record(:tripadvisor, count: 2)
-    Rails.logger.info("[Aggregator] TripAdvisor returned #{hotels.length} results")
+    Rails.logger.info("[Aggregator] TripAdvisor page #{page} returned #{hotels.length} results")
     hotels
   rescue => e
     Rails.logger.error("[Aggregator] TripAdvisor failed: #{e.message}")
