@@ -26,4 +26,4 @@ frontend/cypress/videos/
 frontend/cypress/downloads/
 
 # Docker
-.env
+.env.docker
