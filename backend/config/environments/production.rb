@@ -41,11 +41,17 @@ Rails.application.configure do
   config.active_support.report_deprecations = false
 
   # Replace the default in-process memory cache store with a durable alternative.
-  config.cache_store = :solid_cache_store
+  config.cache_store = :redis_cache_store, {
+    url: ENV.fetch("REDIS_URL", "redis://localhost:6379/1"),
+    expires_in: 2.hours,
+    namespace: "honeymoon_hotel_finder",
+    connect_timeout: 2,
+    read_timeout: 1,
+    write_timeout: 1
+  }
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.active_job.queue_adapter = :sidekiq
-  config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
