@@ -23,6 +23,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_25_015409) do
     t.string "query", null: false
     t.jsonb "results", default: []
     t.datetime "updated_at", null: false
-    t.index ["location", "query"], name: "index_cached_searches_on_location_and_query", unique: true
+    t.index [ "location", "query" ], name: "index_cached_searches_on_location_and_query", unique: true
   end
 end

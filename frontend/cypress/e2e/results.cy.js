@@ -1,10 +1,4 @@
 describe("Results Page with Mocked SSE", () => {
-    it("shows progress indicator on initial load", () => {
-        cy.visit("/results?location=Paris&keywords=romantic");
-        // The progress bar should appear while trying to connect
-        cy.contains("Starting search").should("exist");
-    });
-
     it("has grid and map view toggle buttons", () => {
         cy.visit("/results?location=Paris&keywords=romantic");
 

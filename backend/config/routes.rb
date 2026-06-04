@@ -16,6 +16,6 @@ Rails.application.routes.draw do
   get "up", to: proc { [ 200, { "Content-Type" => "text/plain" }, [ "OK" ] ] }
 
   # Serve the React frontend for any non-API route (must be last)
-  get "*path", to: proc { [200, {}, [File.read(Rails.root.join("public", "index.html"))]] },
+  get "*path", to: proc { [ 200, {}, [ File.read(Rails.root.join("public", "index.html")) ] ] },
       constraints: ->(req) { !req.path.start_with?("/api/", "/up") }
 end
