@@ -72,13 +72,17 @@ Rails.application.configure do
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
+  redis_url = ENV.fetch("REDIS_URL", "redis://localhost:6379/1")
+  ssl_params = redis_url.start_with?("rediss://") ? { verify_mode: OpenSSL::SSL::VERIFY_NONE } : {}
+
   config.cache_store = :redis_cache_store, {
-    url: ENV.fetch("REDIS_URL", "redis://localhost:6379/1"),
+    url: redis_url,
     expires_in: 2.hours,
     namespace: "honeymoon_hotel_finder",
     connect_timeout: 2,
     read_timeout: 1,
-    write_timeout: 1
+    write_timeout: 1,
+    ssl_params: ssl_params
   }
 
   config.public_file_server.enabled = true
