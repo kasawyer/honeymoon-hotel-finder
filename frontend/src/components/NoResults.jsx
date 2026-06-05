@@ -19,10 +19,10 @@ const SUGGESTIONS_BY_REGION = {
       "amalfi",
     ],
     suggestions: [
-      { name: "Paris, France", emoji: "🗼" },
-      { name: "Santorini, Greece", emoji: "🇬🇷" },
-      { name: "Amalfi Coast, Italy", emoji: "🇮🇹" },
-      { name: "Dubrovnik, Croatia", emoji: "🏰" },
+      { name: "Paris, France" },
+      { name: "Santorini, Greece" },
+      { name: "Amalfi Coast, Italy" },
+      { name: "Dubrovnik, Croatia" },
     ],
   },
   asia: {
@@ -38,10 +38,10 @@ const SUGGESTIONS_BY_REGION = {
       "singapore",
     ],
     suggestions: [
-      { name: "Bali, Indonesia", emoji: "🌺" },
-      { name: "Phuket, Thailand", emoji: "🏖️" },
-      { name: "Maldives", emoji: "🏝️" },
-      { name: "Kyoto, Japan", emoji: "🇯🇵" },
+      { name: "Bali, Indonesia" },
+      { name: "Phuket, Thailand" },
+      { name: "Maldives" },
+      { name: "Kyoto, Japan" },
     ],
   },
   caribbean: {
@@ -58,30 +58,30 @@ const SUGGESTIONS_BY_REGION = {
       "puerto rico",
     ],
     suggestions: [
-      { name: "Cancun, Mexico", emoji: "🌮" },
-      { name: "Tulum, Mexico", emoji: "🏛️" },
-      { name: "Jamaica", emoji: "🇯🇲" },
-      { name: "Bahamas", emoji: "🏝️" },
+      { name: "Cancun, Mexico" },
+      { name: "Tulum, Mexico" },
+      { name: "Jamaica" },
+      { name: "Bahamas" },
     ],
   },
   pacific: {
     keywords: ["fiji", "bora bora", "tahiti", "hawaii", "maui", "australia", "new zealand"],
     suggestions: [
-      { name: "Bora Bora", emoji: "🌊" },
-      { name: "Fiji", emoji: "🏝️" },
-      { name: "Maui, Hawaii", emoji: "🌺" },
-      { name: "Queenstown, New Zealand", emoji: "🇳🇿" },
+      { name: "Bora Bora" },
+      { name: "Fiji" },
+      { name: "Maui, Hawaii" },
+      { name: "Queenstown, New Zealand" },
     ],
   },
 };
 
 const DEFAULT_SUGGESTIONS = [
-  { name: "Paris, France", emoji: "🗼" },
-  { name: "Bali, Indonesia", emoji: "🌺" },
-  { name: "Maldives", emoji: "🏝️" },
-  { name: "Santorini, Greece", emoji: "🇬🇷" },
-  { name: "Cancun, Mexico", emoji: "🌮" },
-  { name: "Bora Bora", emoji: "🌊" },
+  { name: "Paris, France" },
+  { name: "Bali, Indonesia" },
+  { name: "Maldives" },
+  { name: "Santorini, Greece" },
+  { name: "Cancun, Mexico" },
+  { name: "Bora Bora" },
 ];
 
 function getSuggestions(location) {
@@ -125,7 +125,7 @@ export default function NoResults({ location, onSearch }) {
                            hover:shadow-md transition-all duration-200 flex items-center gap-1.5"
               >
                 <MapPin className="w-3 h-3" style={{ color: "var(--color-text-muted)" }} />
-                {dest.emoji} {dest.name}
+                {dest.name}
               </button>
             ))}
           </div>

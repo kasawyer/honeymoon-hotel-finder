@@ -72,86 +72,85 @@ export default function PriceFilter({ hotels, onFilterChange }) {
 
       {/* Dual range slider */}
       <div className="relative h-6 mb-2">
-        {/* Track background */}
-        <div className="absolute top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-200 rounded-full" />
+        <div className="relative h-10 mb-2">
+          {/* Track background */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 w-full h-1.5 rounded-full"
+            style={{ backgroundColor: "var(--color-border-warm)" }}
+          />
 
-        {/* Active track */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full"
-          style={{
-            left: `${minPercent}%`,
-            width: `${maxPercent - minPercent}%`,
-            backgroundColor: "var(--color-primary)",
-          }}
-        />
+          {/* Active track */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full"
+            style={{
+              left: `${minPercent}%`,
+              width: `${maxPercent - minPercent}%`,
+              backgroundColor: "var(--color-primary)",
+            }}
+          />
 
-        {/* Min slider */}
-        <input
-          type="range"
-          min={priceMin}
-          max={priceMax}
-          value={range[0]}
-          onChange={handleMinChange}
-          className="absolute w-full top-0 h-8 appearance-none bg-transparent pointer-events-none
+          {/* Min slider */}
+          <input
+            type="range"
+            min={priceMin}
+            max={priceMax}
+            value={range[0]}
+            onChange={handleMinChange}
+            className="absolute w-full top-0 h-10 appearance-none bg-transparent pointer-events-none
                      [&::-webkit-slider-thumb]:pointer-events-auto
                      [&::-webkit-slider-thumb]:appearance-none
-                     [&::-webkit-slider-thumb]:w-6
-                     [&::-webkit-slider-thumb]:h-6
-                     [&::-webkit-slider-thumb]:sm:w-5
-                     [&::-webkit-slider-thumb]:sm:h-5
+                     [&::-webkit-slider-thumb]:w-5
+                     [&::-webkit-slider-thumb]:h-5
                      [&::-webkit-slider-thumb]:rounded-full
                      [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:border-2
-                     [&::-webkit-slider-thumb]:border-rose-800
                      [&::-webkit-slider-thumb]:shadow-md
                      [&::-webkit-slider-thumb]:cursor-pointer
                      [&::-webkit-slider-thumb]:relative
                      [&::-webkit-slider-thumb]:z-10
                      [&::-moz-range-thumb]:pointer-events-auto
                      [&::-moz-range-thumb]:appearance-none
-                     [&::-moz-range-thumb]:w-6
-                     [&::-moz-range-thumb]:h-6
+                     [&::-moz-range-thumb]:w-5
+                     [&::-moz-range-thumb]:h-5
                      [&::-moz-range-thumb]:rounded-full
                      [&::-moz-range-thumb]:bg-white
                      [&::-moz-range-thumb]:border-2
-                     [&::-moz-range-thumb]:border-rose-800
                      [&::-moz-range-thumb]:shadow-md
                      [&::-moz-range-thumb]:cursor-pointer"
-        />
+            style={{ "--tw-border-opacity": 1, borderColor: "var(--color-primary)" }}
+          />
 
-        {/* Max slider */}
-        <input
-          type="range"
-          min={priceMin}
-          max={priceMax}
-          value={range[1]}
-          onChange={handleMaxChange}
-          className="absolute w-full top-0 h-8 appearance-none bg-transparent pointer-events-none
+          {/* Max slider */}
+          <input
+            type="range"
+            min={priceMin}
+            max={priceMax}
+            value={range[1]}
+            onChange={handleMaxChange}
+            className="absolute w-full top-0 h-10 appearance-none bg-transparent pointer-events-none
                      [&::-webkit-slider-thumb]:pointer-events-auto
                      [&::-webkit-slider-thumb]:appearance-none
-                     [&::-webkit-slider-thumb]:w-6
-                     [&::-webkit-slider-thumb]:h-6
-                     [&::-webkit-slider-thumb]:sm:w-5
-                     [&::-webkit-slider-thumb]:sm:h-5
+                     [&::-webkit-slider-thumb]:w-5
+                     [&::-webkit-slider-thumb]:h-5
                      [&::-webkit-slider-thumb]:rounded-full
                      [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:border-2
-                     [&::-webkit-slider-thumb]:border-rose-800
                      [&::-webkit-slider-thumb]:shadow-md
                      [&::-webkit-slider-thumb]:cursor-pointer
                      [&::-webkit-slider-thumb]:relative
                      [&::-webkit-slider-thumb]:z-20
                      [&::-moz-range-thumb]:pointer-events-auto
                      [&::-moz-range-thumb]:appearance-none
-                     [&::-moz-range-thumb]:w-6
-                     [&::-moz-range-thumb]:h-6
+                     [&::-moz-range-thumb]:w-5
+                     [&::-moz-range-thumb]:h-5
                      [&::-moz-range-thumb]:rounded-full
                      [&::-moz-range-thumb]:bg-white
                      [&::-moz-range-thumb]:border-2
-                     [&::-moz-range-thumb]:border-rose-800
                      [&::-moz-range-thumb]:shadow-md
                      [&::-moz-range-thumb]:cursor-pointer"
-        />
+            style={{ "--tw-border-opacity": 1, borderColor: "var(--color-primary)" }}
+          />
+        </div>
       </div>
 
       {/* Min/max labels */}

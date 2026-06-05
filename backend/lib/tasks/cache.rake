@@ -16,11 +16,11 @@ namespace :cache do
     puts "  Uptime: #{stats[:uptime_days]} days"
   end
 
-  desc "Warm cache for all popular destinations"
+  desc "Warm cache for all popular destinations (for Heroku Scheduler)"
   task warm: :environment do
-    puts "Enqueuing cache warming job..."
-    CacheWarmingJob.perform_later
-    puts "Cache warming job enqueued. Run 'bundle exec sidekiq' to process it."
+    puts "Running cache warming job..."
+    CacheWarmingJob.perform_now
+    puts "Cache warming complete."
   end
 
   desc "Warm cache for a single destination (e.g., rake cache:warm_one[Paris])"

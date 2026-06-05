@@ -8,8 +8,8 @@
 #   booking:<hotel_name>:<location>    — Booking.com lookup (TTL: 24 hours)
 #
 class HotelCache
-  SEARCH_TTL = 2.hours
-  HOTEL_LOOKUP_TTL = 24.hours
+  SEARCH_TTL = 1.week
+  HOTEL_LOOKUP_TTL = 1.week
 
   class << self
     # ── Search results cache ──────────────────────────────────────
@@ -77,6 +77,16 @@ class HotelCache
     rescue => e
       Rails.logger.error("[HotelCache] Stats error: #{e.message}")
       {}
+    end
+
+    # Check if a cached search exists (regardless of age — Rails.cache handles TTL)
+    # For the warming job, we write with a 1-week TTL, so if it exists, it's fresh
+    def fresh?(location:, keywords:)
+      key = search_key(location, keywords)
+      Rails.cache.exist?(key)
+    rescue => e
+      Rails.logger.error("[HotelCache] Fresh check error: #{e.message}")
+      false
     end
 
     private

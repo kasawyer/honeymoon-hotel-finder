@@ -40,7 +40,6 @@ class CacheWarmingJob < ApplicationJob
     POPULAR_DESTINATIONS.each do |destination|
       KEYWORD_SETS.each do |keywords|
         warm_cache(destination, keywords, results)
-        # Delay between searches to respect API rate limits
         sleep(2)
       end
     end
@@ -48,16 +47,16 @@ class CacheWarmingJob < ApplicationJob
     duration = (Time.current - start_time).round(1)
     Rails.logger.info(
       "[CacheWarming] Completed in #{duration}s — " \
-        "#{results[:success]} warmed, #{results[:skipped]} already cached, #{results[:failed]} failed"
+        "#{results[:success]} warmed, #{results[:skipped]} still fresh, #{results[:failed]} failed"
     )
   end
 
   private
 
   def warm_cache(destination, keywords, results)
-    # Skip if already cached
-    if HotelCache.get_search(location: destination, keywords: keywords)
-      Rails.logger.debug("[CacheWarming] Already cached: #{destination} [#{keywords.join(', ')}]")
+    # Check if cache exists and is less than a week old
+    if HotelCache.fresh?(location: destination, keywords: keywords)
+      Rails.logger.debug("[CacheWarming] Still fresh: #{destination} [#{keywords.join(', ')}]")
       results[:skipped] += 1
       return
     end
