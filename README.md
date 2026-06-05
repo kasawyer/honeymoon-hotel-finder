@@ -40,7 +40,7 @@ Built as a portfolio project to demonstrate full-stack development with Rails AP
 ![Map view with hotel markers and InfoWindows](docs/images/map-view.png)
 
 ### Mobile
-![Mobile-responsive results page](docs/images/mobile.png)
+<img src="docs/images/mobile-view.png" alt="Mobile-responsive results page" width="375">
 
 ---
 
