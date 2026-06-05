@@ -3,6 +3,8 @@
 **Live Demo:** [honeymoon-hotel-finder-4b17db7a2f56.herokuapp.com](https://honeymoon-hotel-finder-4b17db7a2f56.herokuapp.com/)
 
 [![CI](https://github.com/kasawyer/honeymoon-hotel-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/kasawyer/honeymoon-hotel-finder/actions/workflows/ci.yml)
+[![Maintainability](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder/maintainability.svg)](https://qlty.sh/gh/kasawyer/projects/honeymoon-hotel-finder)
+[![codecov](https://codecov.io/gh/kasawyer/honeymoon-hotel-finder/branch/master/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/kasawyer/honeymoon-hotel-finder)
 
 A hotel review aggregation app that searches TripAdvisor, Google Places, and Booking.com simultaneously, merges ratings into a single weighted score, and streams results to the browser in real time via Server-Sent Events.
 
